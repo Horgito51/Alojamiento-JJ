@@ -1,0 +1,67 @@
+using Microsoft.AspNetCore.Authorization;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.Business.DTOs.Seguridad;
+using Servicio.Hotel.Business.Interfaces.Seguridad;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
+{
+    [ApiController]
+    [Authorize]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/[controller]")]
+    public class UsuarioController : ControllerBase
+    {
+        private readonly IUsuarioService _usuarioService;
+ 
+        public UsuarioController(IUsuarioService usuarioService)
+        {
+            _usuarioService = usuarioService;
+        }
+ 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UsuarioDTO>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        {
+            var pagedResult = await _usuarioService.GetAllPagedAsync(page, pageSize);
+            return Ok(pagedResult.Items);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UsuarioDTO>> GetById(int id)
+        {
+            var usuario = await _usuarioService.GetByIdAsync(id);
+            return Ok(usuario);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<UsuarioDTO>> Create([FromBody] UsuarioDTO usuarioDto)
+        {
+            var nuevoUsuario = await _usuarioService.CreateAsync(usuarioDto);
+            return CreatedAtAction(nameof(GetById), new { id = nuevoUsuario.IdUsuario }, nuevoUsuario);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UsuarioDTO usuarioDto)
+        {
+            if (id != usuarioDto.IdUsuario) return BadRequest();
+            await _usuarioService.UpdateAsync(usuarioDto);
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/inhabilitar")]
+        public async Task<IActionResult> Inhabilitar(int id, [FromBody] string motivo)
+        {
+            await _usuarioService.InhabilitarAsync(id, motivo, "Sistema");
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _usuarioService.DeleteAsync(id);
+            return NoContent();
+        }
+    }
+}

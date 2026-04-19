@@ -1,0 +1,56 @@
+using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.Business.DTOs.Seguridad;
+using Servicio.Hotel.Business.Interfaces.Seguridad;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
+{
+    [ApiController]
+    [Route("api/v1/internal/[controller]")]
+    public class RolController : ControllerBase
+    {
+        private readonly IRolService _rolService;
+
+        public RolController(IRolService rolService)
+        {
+            _rolService = rolService;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<RolDTO>>> GetAll()
+        {
+            var pagedResult = await _rolService.GetAllPagedAsync(1, 50);
+            return Ok(pagedResult.Items);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<RolDTO>> GetById(int id)
+        {
+            var rol = await _rolService.GetByIdAsync(id);
+            return Ok(rol);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<RolDTO>> Create([FromBody] RolDTO rolDto)
+        {
+            var nuevoRol = await _rolService.CreateAsync(rolDto);
+            return CreatedAtAction(nameof(GetById), new { id = nuevoRol.IdRol }, nuevoRol);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] RolDTO rolDto)
+        {
+            if (id != rolDto.IdRol) return BadRequest();
+            await _rolService.UpdateAsync(rolDto);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _rolService.DeleteAsync(id);
+            return NoContent();
+        }
+    }
+}

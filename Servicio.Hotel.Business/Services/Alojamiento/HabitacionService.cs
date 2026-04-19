@@ -1,0 +1,92 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Servicio.Hotel.Business.Common;
+using Servicio.Hotel.Business.DTOs.Alojamiento;
+using Servicio.Hotel.Business.Exceptions;
+using Servicio.Hotel.Business.Interfaces.Alojamiento;
+using Servicio.Hotel.Business.Mappers.Alojamiento;
+using Servicio.Hotel.Business.Validators.Alojamiento;
+using Servicio.Hotel.DataManagement.Alojamiento.Interfaces;
+
+namespace Servicio.Hotel.Business.Services.Alojamiento
+{
+    public class HabitacionService : IHabitacionService
+    {
+        private readonly IHabitacionDataService _habitacionDataService;
+
+        public HabitacionService(IHabitacionDataService habitacionDataService)
+        {
+            _habitacionDataService = habitacionDataService;
+        }
+
+        public async Task<HabitacionDTO> GetByIdAsync(int id, CancellationToken ct = default)
+        {
+            var dataModel = await _habitacionDataService.GetByIdAsync(id, ct);
+            if (dataModel == null)
+                throw new NotFoundException("HAB-001", $"No se encontró la habitación con ID {id}.");
+            return dataModel.ToDto();
+        }
+
+        public async Task<HabitacionDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default)
+        {
+            var dataModel = await _habitacionDataService.GetByGuidAsync(guid, ct);
+            if (dataModel == null)
+                throw new NotFoundException("HAB-002", $"No se encontró la habitación con GUID {guid}.");
+            return dataModel.ToDto();
+        }
+
+        public async Task<IEnumerable<HabitacionDTO>> GetAllAsync(CancellationToken ct = default)
+        {
+            var pagedResult = await _habitacionDataService.GetAllPagedAsync(1, int.MaxValue, ct);
+            return pagedResult.Items.ToDtoList();
+        }
+
+        public async Task<HabitacionDTO> CreateAsync(HabitacionDTO habitacionDto, CancellationToken ct = default)
+        {
+            HabitacionValidator.Validate(habitacionDto);
+            var dataModel = habitacionDto.ToDataModel();
+            var created = await _habitacionDataService.AddAsync(dataModel, ct);
+            return created.ToDto();
+        }
+
+        public async Task UpdateAsync(HabitacionDTO habitacionDto, CancellationToken ct = default)
+        {
+            HabitacionValidator.Validate(habitacionDto);
+            var existing = await _habitacionDataService.GetByIdAsync(habitacionDto.IdHabitacion, ct);
+            if (existing == null)
+                throw new NotFoundException("HAB-003", $"No se encontró la habitación con ID {habitacionDto.IdHabitacion}.");
+            var dataModel = habitacionDto.ToDataModel();
+            await _habitacionDataService.UpdateAsync(dataModel, ct);
+        }
+
+        public async Task DeleteAsync(int id, CancellationToken ct = default)
+        {
+            var existing = await _habitacionDataService.GetByIdAsync(id, ct);
+            if (existing == null)
+                throw new NotFoundException("HAB-004", $"No se encontró la habitación con ID {id}.");
+            await _habitacionDataService.DeleteAsync(id, ct);
+        }
+
+        public async Task<IEnumerable<HabitacionDTO>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default)
+        {
+            var dataModels = await _habitacionDataService.GetBySucursalAsync(idSucursal, ct);
+            return dataModels.ToDtoList();
+        }
+
+        public async Task<IEnumerable<HabitacionDTO>> GetByTipoHabitacionAsync(int idTipoHabitacion, CancellationToken ct = default)
+        {
+            var dataModels = await _habitacionDataService.GetByTipoHabitacionAsync(idTipoHabitacion, ct);
+            return dataModels.ToDtoList();
+        }
+
+        public async Task UpdateEstadoAsync(int id, string nuevoEstado, string usuario, CancellationToken ct = default)
+        {
+            var existing = await _habitacionDataService.GetByIdAsync(id, ct);
+            if (existing == null)
+                throw new NotFoundException("HAB-005", $"No se encontró la habitación con ID {id}.");
+            await _habitacionDataService.UpdateEstadoAsync(id, nuevoEstado, usuario, ct);
+        }
+    }
+}
