@@ -39,7 +39,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         [HttpPost]
         public async Task<ActionResult<TipoHabitacionDTO>> Create([FromBody] TipoHabitacionUpsertRequest request)
         {
-            var dto = request.ToDto();
+            var dto = request.ToCreateDto();
             var result = await _tipoHabitacionService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdTipoHabitacion }, result);
         }
@@ -47,7 +47,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] TipoHabitacionUpsertRequest request)
         {
-            var dto = request.ToDto(id);
+            var dto = request.ToUpdateDto(id);
             await _tipoHabitacionService.UpdateAsync(dto);
             return NoContent();
         }

@@ -13,8 +13,8 @@ namespace Servicio.Hotel.Business.Interfaces.Reservas
         Task<ReservaDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default);
         Task<ReservaDTO> GetByCodigoAsync(string codigo, CancellationToken ct = default);
         Task<PagedResult<ReservaDTO>> GetByFiltroAsync(ReservaFiltroDTO filtro, int pageNumber, int pageSize, CancellationToken ct = default);
-        Task<ReservaDTO> CreateAsync(ReservaDTO reservaDto, CancellationToken ct = default);
-        Task UpdateAsync(ReservaDTO reservaDto, CancellationToken ct = default);
+        Task<ReservaDTO> CreateAsync(ReservaCreateDTO reservaCreateDto, CancellationToken ct = default);
+        Task UpdateAsync(ReservaUpdateDTO reservaUpdateDto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task ConfirmarAsync(int idReserva, string usuario, CancellationToken ct = default);

@@ -41,21 +41,21 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             return pagedResult.Items.ToDtoList();
         }
 
-        public async Task<TipoHabitacionDTO> CreateAsync(TipoHabitacionDTO tipoDto, CancellationToken ct = default)
+        public async Task<TipoHabitacionDTO> CreateAsync(TipoHabitacionCreateDTO tipoCreateDto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(tipoDto.CodigoTipoHabitacion))
+            if (string.IsNullOrWhiteSpace(tipoCreateDto.CodigoTipoHabitacion))
                 throw new ValidationException("TIP-003", "El código del tipo de habitación es obligatorio.");
-            var dataModel = tipoDto.ToDataModel();
+            var dataModel = tipoCreateDto.ToDataModel();
             var created = await _tipoHabitacionDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(TipoHabitacionDTO tipoDto, CancellationToken ct = default)
+        public async Task UpdateAsync(TipoHabitacionUpdateDTO tipoUpdateDto, CancellationToken ct = default)
         {
-            var existing = await _tipoHabitacionDataService.GetByIdAsync(tipoDto.IdTipoHabitacion, ct);
+            var existing = await _tipoHabitacionDataService.GetByIdAsync(tipoUpdateDto.IdTipoHabitacion, ct);
             if (existing == null)
-                throw new NotFoundException("TIP-004", $"No se encontró el tipo de habitación con ID {tipoDto.IdTipoHabitacion}.");
-            var dataModel = tipoDto.ToDataModel();
+                throw new NotFoundException("TIP-004", $"No se encontró el tipo de habitación con ID {tipoUpdateDto.IdTipoHabitacion}.");
+            var dataModel = tipoUpdateDto.ToDataModel();
             await _tipoHabitacionDataService.UpdateAsync(dataModel, ct);
         }
 

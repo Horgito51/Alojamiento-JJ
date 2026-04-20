@@ -43,21 +43,45 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             return pagedResult.Items.ToDtoList();
         }
 
-        public async Task<HabitacionDTO> CreateAsync(HabitacionDTO habitacionDto, CancellationToken ct = default)
+        public async Task<HabitacionDTO> CreateAsync(HabitacionCreateDTO habitacionCreateDto, CancellationToken ct = default)
         {
+            var habitacionDto = new HabitacionDTO
+            {
+                IdSucursal = habitacionCreateDto.IdSucursal,
+                IdTipoHabitacion = habitacionCreateDto.IdTipoHabitacion,
+                NumeroHabitacion = habitacionCreateDto.NumeroHabitacion,
+                Piso = habitacionCreateDto.Piso,
+                CapacidadHabitacion = habitacionCreateDto.CapacidadHabitacion,
+                PrecioBase = habitacionCreateDto.PrecioBase,
+                DescripcionHabitacion = habitacionCreateDto.DescripcionHabitacion ?? string.Empty,
+                EstadoHabitacion = habitacionCreateDto.EstadoHabitacion
+            };
+
             HabitacionValidator.Validate(habitacionDto);
             var dataModel = habitacionDto.ToDataModel();
             var created = await _habitacionDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(HabitacionDTO habitacionDto, CancellationToken ct = default)
+        public async Task UpdateAsync(HabitacionUpdateDTO habitacionUpdateDto, CancellationToken ct = default)
         {
+            var habitacionDto = new HabitacionDTO
+            {
+                IdHabitacion = habitacionUpdateDto.IdHabitacion,
+                IdTipoHabitacion = habitacionUpdateDto.IdTipoHabitacion,
+                NumeroHabitacion = habitacionUpdateDto.NumeroHabitacion,
+                Piso = habitacionUpdateDto.Piso,
+                CapacidadHabitacion = habitacionUpdateDto.CapacidadHabitacion,
+                PrecioBase = habitacionUpdateDto.PrecioBase,
+                DescripcionHabitacion = habitacionUpdateDto.DescripcionHabitacion ?? string.Empty,
+                EstadoHabitacion = habitacionUpdateDto.EstadoHabitacion
+            };
+
             HabitacionValidator.Validate(habitacionDto);
-            var existing = await _habitacionDataService.GetByIdAsync(habitacionDto.IdHabitacion, ct);
+            var existing = await _habitacionDataService.GetByIdAsync(habitacionUpdateDto.IdHabitacion, ct);
             if (existing == null)
-                throw new NotFoundException("HAB-003", $"No se encontró la habitación con ID {habitacionDto.IdHabitacion}.");
-            
+                throw new NotFoundException("HAB-003", $"No se encontró la habitación con ID {habitacionUpdateDto.IdHabitacion}.");
+
             // Solo actualizamos los campos permitidos en la actualización
             existing.IdTipoHabitacion = habitacionDto.IdTipoHabitacion;
             existing.NumeroHabitacion = habitacionDto.NumeroHabitacion;
@@ -66,7 +90,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             existing.PrecioBase = habitacionDto.PrecioBase;
             existing.DescripcionHabitacion = habitacionDto.DescripcionHabitacion;
             existing.EstadoHabitacion = habitacionDto.EstadoHabitacion;
-            
+
             await _habitacionDataService.UpdateAsync(existing, ct);
         }
 

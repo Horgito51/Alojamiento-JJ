@@ -76,5 +76,46 @@ namespace Servicio.Hotel.Business.Mappers.Alojamiento
 
         public static List<TipoHabitacionDataModel> ToDataModelList(this IEnumerable<TipoHabitacionDTO> dtos)
             => dtos?.Select(d => d.ToDataModel()).ToList() ?? new();
+
+        public static TipoHabitacionDataModel ToDataModel(this TipoHabitacionCreateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new TipoHabitacionDataModel
+            {
+                CodigoTipoHabitacion = dto.CodigoTipoHabitacion,
+                NombreTipoHabitacion = dto.NombreTipoHabitacion,
+                Descripcion = dto.Descripcion ?? string.Empty,
+                CapacidadAdultos = dto.CapacidadAdultos,
+                CapacidadNinos = dto.CapacidadNinos,
+                CapacidadTotal = dto.CapacidadTotal,
+                TipoCama = dto.TipoCama,
+                AreaM2 = dto.AreaM2,
+                PermiteEventos = dto.PermiteEventos,
+                PermiteReservaPublica = dto.PermiteReservaPublica,
+                EstadoTipoHabitacion = dto.EstadoTipoHabitacion
+            };
+        }
+
+        public static TipoHabitacionDataModel ToDataModel(this TipoHabitacionUpdateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new TipoHabitacionDataModel
+            {
+                IdTipoHabitacion = dto.IdTipoHabitacion,
+                CodigoTipoHabitacion = dto.CodigoTipoHabitacion,
+                NombreTipoHabitacion = dto.NombreTipoHabitacion,
+                Descripcion = dto.Descripcion ?? string.Empty,
+                CapacidadAdultos = dto.CapacidadAdultos,
+                CapacidadNinos = dto.CapacidadNinos,
+                CapacidadTotal = dto.CapacidadTotal,
+                TipoCama = dto.TipoCama,
+                AreaM2 = dto.AreaM2,
+                PermiteEventos = dto.PermiteEventos,
+                PermiteReservaPublica = dto.PermiteReservaPublica,
+                EstadoTipoHabitacion = dto.EstadoTipoHabitacion
+            };
+        }
     }
 }

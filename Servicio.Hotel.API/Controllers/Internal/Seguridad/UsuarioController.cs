@@ -39,16 +39,16 @@ namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
         [HttpPost]
         public async Task<ActionResult<UsuarioDTO>> Create([FromBody] UsuarioCreateRequest request)
         {
-            var usuarioDto = request.ToDto();
-            var nuevoUsuario = await _usuarioService.CreateAsync(usuarioDto);
+            var usuarioCreateDto = request.ToCreateDto();
+            var nuevoUsuario = await _usuarioService.CreateAsync(usuarioCreateDto);
             return CreatedAtAction(nameof(GetById), new { id = nuevoUsuario.IdUsuario }, nuevoUsuario);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UsuarioUpdateRequest request)
         {
-            var usuarioDto = request.ToDto(id);
-            await _usuarioService.UpdateAsync(usuarioDto);
+            var usuarioUpdateDto = request.ToUpdateDto(id);
+            await _usuarioService.UpdateAsync(usuarioUpdateDto);
             return NoContent();
         }
 

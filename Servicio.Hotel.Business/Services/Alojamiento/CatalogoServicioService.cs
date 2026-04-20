@@ -25,13 +25,13 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             => (await _dataService.GetByIdAsync(id, ct)).ToDto()
                ?? throw new NotFoundException("CAT-001", $"No se encontró el catálogo de servicio con ID {id}.");
 
-        public async Task<CatalogoServicioDTO> CreateAsync(CatalogoServicioDTO dto, CancellationToken ct = default)
+        public async Task<CatalogoServicioDTO> CreateAsync(CatalogoServicioCreateDTO dto, CancellationToken ct = default)
         {
             var created = await _dataService.AddAsync(dto.ToDataModel()!, ct);
             return created.ToDto()!;
         }
 
-        public async Task UpdateAsync(CatalogoServicioDTO dto, CancellationToken ct = default)
+        public async Task UpdateAsync(CatalogoServicioUpdateDTO dto, CancellationToken ct = default)
         {
             _ = await GetByIdAsync(dto.IdCatalogo, ct);
             await _dataService.UpdateAsync(dto.ToDataModel()!, ct);

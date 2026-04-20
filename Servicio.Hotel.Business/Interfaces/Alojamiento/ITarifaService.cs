@@ -12,8 +12,8 @@ namespace Servicio.Hotel.Business.Interfaces.Alojamiento
         Task<TarifaDTO> GetByIdAsync(int id, CancellationToken ct = default);
         Task<TarifaDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default);
         Task<IEnumerable<TarifaDTO>> GetAllAsync(CancellationToken ct = default);
-        Task<TarifaDTO> CreateAsync(TarifaDTO tarifaDto, CancellationToken ct = default);
-        Task UpdateAsync(TarifaDTO tarifaDto, CancellationToken ct = default);
+        Task<TarifaDTO> CreateAsync(TarifaCreateDTO tarifaCreateDto, CancellationToken ct = default);
+        Task UpdateAsync(TarifaUpdateDTO tarifaUpdateDto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task<IEnumerable<TarifaDTO>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);

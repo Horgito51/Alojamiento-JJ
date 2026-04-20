@@ -49,31 +49,43 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             };
         }
 
-        public async Task<UsuarioDTO> CreateAsync(UsuarioDTO usuarioDto, CancellationToken ct = default)
+        public async Task<UsuarioDTO> CreateAsync(UsuarioCreateDTO usuarioCreateDto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(usuarioDto.Username))
+            if (string.IsNullOrWhiteSpace(usuarioCreateDto.Username))
                 throw new ValidationException("USR-003", "El nombre de usuario es obligatorio.");
-            if (string.IsNullOrWhiteSpace(usuarioDto.Correo))
+            if (string.IsNullOrWhiteSpace(usuarioCreateDto.Correo))
                 throw new ValidationException("USR-004", "El correo es obligatorio.");
-            var dataModel = usuarioDto.ToDataModel();
+
+            var dataModel = new Servicio.Hotel.DataManagement.Seguridad.Models.UsuarioDataModel
+            {
+                IdCliente = usuarioCreateDto.IdCliente,
+                Username = usuarioCreateDto.Username,
+                Correo = usuarioCreateDto.Correo,
+                Nombres = usuarioCreateDto.Nombres,
+                Apellidos = usuarioCreateDto.Apellidos,
+                EstadoUsuario = usuarioCreateDto.EstadoUsuario,
+                Activo = usuarioCreateDto.Activo,
+                Roles = usuarioCreateDto.Roles?.Select(r => r.ToDataModel()).ToList()
+            };
+
             var created = await _usuarioDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(UsuarioDTO usuarioDto, CancellationToken ct = default)
+        public async Task UpdateAsync(UsuarioUpdateDTO usuarioUpdateDto, CancellationToken ct = default)
         {
-            var existing = await _usuarioDataService.GetByIdAsync(usuarioDto.IdUsuario, ct);
+            var existing = await _usuarioDataService.GetByIdAsync(usuarioUpdateDto.IdUsuario, ct);
             if (existing == null)
-                throw new NotFoundException("USR-005", $"No se encontró el usuario con ID {usuarioDto.IdUsuario}.");
-            
+                throw new NotFoundException("USR-005", $"No se encontró el usuario con ID {usuarioUpdateDto.IdUsuario}.");
+
             // Solo actualizamos los campos permitidos en la actualización
-            existing.Correo = usuarioDto.Correo;
-            existing.Nombres = usuarioDto.Nombres;
-            existing.Apellidos = usuarioDto.Apellidos;
-            existing.EstadoUsuario = usuarioDto.EstadoUsuario;
-            existing.Activo = usuarioDto.Activo;
-            existing.Roles = usuarioDto.Roles?.Select(r => r.ToDataModel()).ToList();
-            
+            existing.Correo = usuarioUpdateDto.Correo;
+            existing.Nombres = usuarioUpdateDto.Nombres;
+            existing.Apellidos = usuarioUpdateDto.Apellidos;
+            existing.EstadoUsuario = usuarioUpdateDto.EstadoUsuario;
+            existing.Activo = usuarioUpdateDto.Activo;
+            existing.Roles = usuarioUpdateDto.Roles?.Select(r => r.ToDataModel()).ToList();
+
             await _usuarioDataService.UpdateAsync(existing, ct);
         }
 

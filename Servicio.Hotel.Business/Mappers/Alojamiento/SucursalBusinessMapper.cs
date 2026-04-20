@@ -103,5 +103,76 @@ namespace Servicio.Hotel.Business.Mappers.Alojamiento
 
         public static List<SucursalDTO> ToDtoList(this IEnumerable<SucursalDataModel> models)
             => models?.Select(x => x.ToDto()!).ToList() ?? new();
+
+        public static SucursalDataModel ToDataModel(this SucursalCreateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new SucursalDataModel
+            {
+                CodigoSucursal = dto.CodigoSucursal,
+                NombreSucursal = dto.NombreSucursal,
+                DescripcionSucursal = dto.DescripcionSucursal ?? string.Empty,
+                DescripcionCorta = dto.DescripcionCorta ?? string.Empty,
+                TipoAlojamiento = dto.TipoAlojamiento ?? string.Empty,
+                Estrellas = dto.Estrellas,
+                CategoriaViaje = dto.CategoriaViaje ?? string.Empty,
+                Pais = dto.Pais ?? string.Empty,
+                Provincia = dto.Provincia ?? string.Empty,
+                Ciudad = dto.Ciudad ?? string.Empty,
+                Ubicacion = dto.Ubicacion ?? string.Empty,
+                Direccion = dto.Direccion ?? string.Empty,
+                CodigoPostal = dto.CodigoPostal ?? string.Empty,
+                Telefono = dto.Telefono ?? string.Empty,
+                Correo = dto.Correo ?? string.Empty,
+                Latitud = dto.Latitud,
+                Longitud = dto.Longitud,
+                HoraCheckin = dto.HoraCheckin ?? string.Empty,
+                HoraCheckout = dto.HoraCheckout ?? string.Empty,
+                CheckinAnticipado = dto.CheckinAnticipado,
+                CheckoutTardio = dto.CheckoutTardio,
+                AceptaNinos = dto.AceptaNinos,
+                EdadMinimaHuesped = dto.EdadMinimaHuesped,
+                PermiteMascotas = dto.PermiteMascotas,
+                SePermiteFumar = dto.SePermiteFumar,
+                EstadoSucursal = dto.EstadoSucursal
+            };
+        }
+
+        public static SucursalDataModel ToDataModel(this SucursalUpdateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new SucursalDataModel
+            {
+                IdSucursal = dto.IdSucursal,
+                CodigoSucursal = dto.CodigoSucursal,
+                NombreSucursal = dto.NombreSucursal,
+                DescripcionSucursal = dto.DescripcionSucursal ?? string.Empty,
+                DescripcionCorta = dto.DescripcionCorta ?? string.Empty,
+                TipoAlojamiento = dto.TipoAlojamiento ?? string.Empty,
+                Estrellas = dto.Estrellas,
+                CategoriaViaje = dto.CategoriaViaje ?? string.Empty,
+                Pais = dto.Pais ?? string.Empty,
+                Provincia = dto.Provincia ?? string.Empty,
+                Ciudad = dto.Ciudad ?? string.Empty,
+                Ubicacion = dto.Ubicacion ?? string.Empty,
+                Direccion = dto.Direccion ?? string.Empty,
+                CodigoPostal = dto.CodigoPostal ?? string.Empty,
+                Telefono = dto.Telefono ?? string.Empty,
+                Correo = dto.Correo ?? string.Empty,
+                Latitud = dto.Latitud,
+                Longitud = dto.Longitud,
+                HoraCheckin = dto.HoraCheckin ?? string.Empty,
+                HoraCheckout = dto.HoraCheckout ?? string.Empty,
+                CheckinAnticipado = dto.CheckinAnticipado,
+                CheckoutTardio = dto.CheckoutTardio,
+                AceptaNinos = dto.AceptaNinos,
+                EdadMinimaHuesped = dto.EdadMinimaHuesped,
+                PermiteMascotas = dto.PermiteMascotas,
+                SePermiteFumar = dto.SePermiteFumar,
+                EstadoSucursal = dto.EstadoSucursal
+            };
+        }
     }
 }

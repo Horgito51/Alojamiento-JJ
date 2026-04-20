@@ -25,13 +25,13 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             => (await _dataService.GetByIdAsync(id, ct)).ToDto()
                ?? throw new NotFoundException("SUC-001", $"No se encontró la sucursal con ID {id}.");
 
-        public async Task<SucursalDTO> CreateAsync(SucursalDTO dto, CancellationToken ct = default)
+        public async Task<SucursalDTO> CreateAsync(SucursalCreateDTO dto, CancellationToken ct = default)
         {
             var created = await _dataService.AddAsync(dto.ToDataModel()!, ct);
             return created.ToDto()!;
         }
 
-        public async Task UpdateAsync(SucursalDTO dto, CancellationToken ct = default)
+        public async Task UpdateAsync(SucursalUpdateDTO dto, CancellationToken ct = default)
         {
             _ = await GetByIdAsync(dto.IdSucursal, ct);
             await _dataService.UpdateAsync(dto.ToDataModel()!, ct);

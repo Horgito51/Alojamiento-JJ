@@ -77,5 +77,50 @@ namespace Servicio.Hotel.Business.Mappers.Alojamiento
 
         public static List<CatalogoServicioDTO> ToDtoList(this IEnumerable<CatalogoServicioDataModel> models)
             => models?.Select(x => x.ToDto()!).ToList() ?? new();
+
+        public static CatalogoServicioDataModel ToDataModel(this CatalogoServicioCreateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new CatalogoServicioDataModel
+            {
+                IdSucursal = dto.IdSucursal,
+                CodigoCatalogo = dto.CodigoCatalogo,
+                NombreCatalogo = dto.NombreCatalogo,
+                TipoCatalogo = dto.TipoCatalogo,
+                CategoriaCatalogo = dto.CategoriaCatalogo ?? string.Empty,
+                DescripcionCatalogo = dto.DescripcionCatalogo ?? string.Empty,
+                PrecioBase = dto.PrecioBase,
+                AplicaIva = dto.AplicaIva,
+                Disponible24h = dto.Disponible24h,
+                HoraInicio = dto.HoraInicio,
+                HoraFin = dto.HoraFin,
+                IconoUrl = dto.IconoUrl ?? string.Empty,
+                EstadoCatalogo = dto.EstadoCatalogo
+            };
+        }
+
+        public static CatalogoServicioDataModel ToDataModel(this CatalogoServicioUpdateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new CatalogoServicioDataModel
+            {
+                IdCatalogo = dto.IdCatalogo,
+                IdSucursal = dto.IdSucursal,
+                CodigoCatalogo = dto.CodigoCatalogo,
+                NombreCatalogo = dto.NombreCatalogo,
+                TipoCatalogo = dto.TipoCatalogo,
+                CategoriaCatalogo = dto.CategoriaCatalogo ?? string.Empty,
+                DescripcionCatalogo = dto.DescripcionCatalogo ?? string.Empty,
+                PrecioBase = dto.PrecioBase,
+                AplicaIva = dto.AplicaIva,
+                Disponible24h = dto.Disponible24h,
+                HoraInicio = dto.HoraInicio,
+                HoraFin = dto.HoraFin,
+                IconoUrl = dto.IconoUrl ?? string.Empty,
+                EstadoCatalogo = dto.EstadoCatalogo
+            };
+        }
     }
 }

@@ -11,8 +11,8 @@ namespace Servicio.Hotel.Business.Interfaces.Seguridad
         Task<RolDTO> GetByIdAsync(int id, CancellationToken ct = default);
         Task<RolDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default);
         Task<PagedResult<RolDTO>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
-        Task<RolDTO> CreateAsync(RolDTO rolDto, CancellationToken ct = default);
-        Task UpdateAsync(RolDTO rolDto, CancellationToken ct = default);
+        Task<RolDTO> CreateAsync(RolCreateDTO rolCreateDto, CancellationToken ct = default);
+        Task UpdateAsync(RolUpdateDTO rolUpdateDto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task<RolDTO> GetByNombreAsync(string nombre, CancellationToken ct = default);

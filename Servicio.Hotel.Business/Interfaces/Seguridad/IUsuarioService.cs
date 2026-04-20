@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Seguridad;
+using Servicio.Hotel.Business.DTOs.Seguridad;
 
 namespace Servicio.Hotel.Business.Interfaces.Seguridad
 {
@@ -11,8 +12,8 @@ namespace Servicio.Hotel.Business.Interfaces.Seguridad
         Task<UsuarioDTO> GetByIdAsync(int id, CancellationToken ct = default);
         Task<UsuarioDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default);
         Task<PagedResult<UsuarioDTO>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
-        Task<UsuarioDTO> CreateAsync(UsuarioDTO usuarioDto, CancellationToken ct = default);
-        Task UpdateAsync(UsuarioDTO usuarioDto, CancellationToken ct = default);
+        Task<UsuarioDTO> CreateAsync(UsuarioCreateDTO usuarioCreateDto, CancellationToken ct = default);
+        Task UpdateAsync(UsuarioUpdateDTO usuarioUpdateDto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task<UsuarioDTO> GetByUsernameAsync(string username, CancellationToken ct = default);

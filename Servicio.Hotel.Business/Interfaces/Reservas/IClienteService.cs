@@ -12,8 +12,8 @@ namespace Servicio.Hotel.Business.Interfaces.Reservas
         Task<ClienteDTO> GetByIdAsync(int id, CancellationToken ct = default);
         Task<ClienteDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default);
         Task<PagedResult<ClienteDTO>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
-        Task<ClienteDTO> CreateAsync(ClienteDTO clienteDto, CancellationToken ct = default);
-        Task UpdateAsync(ClienteDTO clienteDto, CancellationToken ct = default);
+        Task<ClienteDTO> CreateAsync(ClienteCreateDTO clienteCreateDto, CancellationToken ct = default);
+        Task UpdateAsync(ClienteUpdateDTO clienteUpdateDto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task<ClienteDTO> GetByIdentificacionAsync(string tipo, string numero, CancellationToken ct = default);

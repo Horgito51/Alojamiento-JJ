@@ -42,22 +42,21 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             return pagedResult.Items.ToDtoList();
         }
 
-        public async Task<TarifaDTO> CreateAsync(TarifaDTO tarifaDto, CancellationToken ct = default)
+        public async Task<TarifaDTO> CreateAsync(TarifaCreateDTO tarifaCreateDto, CancellationToken ct = default)
         {
-            // Validación simple (podrías crear TarifaValidator si lo deseas)
-            if (tarifaDto.PrecioPorNoche <= 0)
+            if (tarifaCreateDto.PrecioPorNoche <= 0)
                 throw new ValidationException("TAR-003", "El precio por noche debe ser mayor a cero.");
-            var dataModel = tarifaDto.ToDataModel();
+            var dataModel = tarifaCreateDto.ToDataModel();
             var created = await _tarifaDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(TarifaDTO tarifaDto, CancellationToken ct = default)
+        public async Task UpdateAsync(TarifaUpdateDTO tarifaUpdateDto, CancellationToken ct = default)
         {
-            var existing = await _tarifaDataService.GetByIdAsync(tarifaDto.IdTarifa, ct);
+            var existing = await _tarifaDataService.GetByIdAsync(tarifaUpdateDto.IdTarifa, ct);
             if (existing == null)
-                throw new NotFoundException("TAR-004", $"No se encontró la tarifa con ID {tarifaDto.IdTarifa}.");
-            var dataModel = tarifaDto.ToDataModel();
+                throw new NotFoundException("TAR-004", $"No se encontró la tarifa con ID {tarifaUpdateDto.IdTarifa}.");
+            var dataModel = tarifaUpdateDto.ToDataModel();
             await _tarifaDataService.UpdateAsync(dataModel, ct);
         }
 

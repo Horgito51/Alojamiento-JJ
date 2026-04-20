@@ -47,22 +47,31 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             };
         }
 
-        public async Task<RolDTO> CreateAsync(RolDTO rolDto, CancellationToken ct = default)
+        public async Task<RolDTO> CreateAsync(RolCreateDTO rolCreateDto, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(rolDto.NombreRol))
+            if (string.IsNullOrWhiteSpace(rolCreateDto.NombreRol))
                 throw new ValidationException("ROL-003", "El nombre del rol es obligatorio.");
-            var dataModel = rolDto.ToDataModel();
+            var dataModel = new Servicio.Hotel.DataManagement.Seguridad.Models.RolDataModel
+            {
+                NombreRol = rolCreateDto.NombreRol,
+                DescripcionRol = rolCreateDto.DescripcionRol,
+                EstadoRol = rolCreateDto.EstadoRol,
+                Activo = rolCreateDto.Activo
+            };
             var created = await _rolDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(RolDTO rolDto, CancellationToken ct = default)
+        public async Task UpdateAsync(RolUpdateDTO rolUpdateDto, CancellationToken ct = default)
         {
-            var existing = await _rolDataService.GetByIdAsync(rolDto.IdRol, ct);
+            var existing = await _rolDataService.GetByIdAsync(rolUpdateDto.IdRol, ct);
             if (existing == null)
-                throw new NotFoundException("ROL-004", $"No se encontró el rol con ID {rolDto.IdRol}.");
-            var dataModel = rolDto.ToDataModel();
-            await _rolDataService.UpdateAsync(dataModel, ct);
+                throw new NotFoundException("ROL-004", $"No se encontró el rol con ID {rolUpdateDto.IdRol}.");
+            existing.NombreRol = rolUpdateDto.NombreRol;
+            existing.DescripcionRol = rolUpdateDto.DescripcionRol;
+            existing.EstadoRol = rolUpdateDto.EstadoRol;
+            existing.Activo = rolUpdateDto.Activo;
+            await _rolDataService.UpdateAsync(existing, ct);
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)

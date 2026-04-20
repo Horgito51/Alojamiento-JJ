@@ -9,8 +9,8 @@ namespace Servicio.Hotel.Business.Interfaces.Alojamiento
     {
         Task<IEnumerable<SucursalDTO>> GetAllAsync(CancellationToken ct = default);
         Task<SucursalDTO> GetByIdAsync(int id, CancellationToken ct = default);
-        Task<SucursalDTO> CreateAsync(SucursalDTO dto, CancellationToken ct = default);
-        Task UpdateAsync(SucursalDTO dto, CancellationToken ct = default);
+        Task<SucursalDTO> CreateAsync(SucursalCreateDTO dto, CancellationToken ct = default);
+        Task UpdateAsync(SucursalUpdateDTO dto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
     }
 }

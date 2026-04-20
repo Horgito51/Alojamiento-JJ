@@ -72,5 +72,40 @@ namespace Servicio.Hotel.Business.Mappers.Reservas
 
         public static List<ClienteDataModel> ToDataModelList(this IEnumerable<ClienteDTO> dtos)
             => dtos?.Select(d => d.ToDataModel()).ToList() ?? new();
+
+        public static ClienteDataModel ToDataModel(this ClienteCreateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new ClienteDataModel
+            {
+                TipoIdentificacion = dto.TipoIdentificacion,
+                NumeroIdentificacion = dto.NumeroIdentificacion,
+                Nombres = dto.Nombres,
+                Apellidos = dto.Apellidos,
+                RazonSocial = dto.RazonSocial ?? string.Empty,
+                Correo = dto.Correo,
+                Telefono = dto.Telefono ?? string.Empty,
+                Direccion = dto.Direccion ?? string.Empty,
+                Estado = dto.Estado
+            };
+        }
+
+        public static ClienteDataModel ToDataModel(this ClienteUpdateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new ClienteDataModel
+            {
+                IdCliente = dto.IdCliente,
+                Nombres = dto.Nombres,
+                Apellidos = dto.Apellidos,
+                RazonSocial = dto.RazonSocial ?? string.Empty,
+                Correo = dto.Correo,
+                Telefono = dto.Telefono ?? string.Empty,
+                Direccion = dto.Direccion ?? string.Empty,
+                Estado = dto.Estado
+            };
+        }
     }
 }

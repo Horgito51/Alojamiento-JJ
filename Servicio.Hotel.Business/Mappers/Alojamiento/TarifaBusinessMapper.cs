@@ -82,5 +82,52 @@ namespace Servicio.Hotel.Business.Mappers.Alojamiento
 
         public static List<TarifaDataModel> ToDataModelList(this IEnumerable<TarifaDTO> dtos)
             => dtos?.Select(d => d.ToDataModel()).ToList() ?? new();
+
+        public static TarifaDataModel ToDataModel(this TarifaCreateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new TarifaDataModel
+            {
+                CodigoTarifa = dto.CodigoTarifa,
+                IdSucursal = dto.IdSucursal,
+                IdTipoHabitacion = dto.IdTipoHabitacion,
+                NombreTarifa = dto.NombreTarifa,
+                CanalTarifa = dto.CanalTarifa,
+                FechaInicio = dto.FechaInicio,
+                FechaFin = dto.FechaFin,
+                PrecioPorNoche = dto.PrecioPorNoche,
+                PorcentajeIva = dto.PorcentajeIva,
+                MinNoches = dto.MinNoches,
+                MaxNoches = dto.MaxNoches,
+                PermitePortalPublico = dto.PermitePortalPublico,
+                Prioridad = dto.Prioridad,
+                EstadoTarifa = dto.EstadoTarifa
+            };
+        }
+
+        public static TarifaDataModel ToDataModel(this TarifaUpdateDTO dto)
+        {
+            if (dto == null) return null;
+
+            return new TarifaDataModel
+            {
+                IdTarifa = dto.IdTarifa,
+                CodigoTarifa = dto.CodigoTarifa,
+                IdSucursal = dto.IdSucursal,
+                IdTipoHabitacion = dto.IdTipoHabitacion,
+                NombreTarifa = dto.NombreTarifa,
+                CanalTarifa = dto.CanalTarifa,
+                FechaInicio = dto.FechaInicio,
+                FechaFin = dto.FechaFin,
+                PrecioPorNoche = dto.PrecioPorNoche,
+                PorcentajeIva = dto.PorcentajeIva,
+                MinNoches = dto.MinNoches,
+                MaxNoches = dto.MaxNoches,
+                PermitePortalPublico = dto.PermitePortalPublico,
+                Prioridad = dto.Prioridad,
+                EstadoTarifa = dto.EstadoTarifa
+            };
+        }
     }
 }

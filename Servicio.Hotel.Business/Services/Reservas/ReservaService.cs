@@ -56,21 +56,53 @@ namespace Servicio.Hotel.Business.Services.Reservas
             };
         }
 
-        public async Task<ReservaDTO> CreateAsync(ReservaDTO reservaDto, CancellationToken ct = default)
+        public async Task<ReservaDTO> CreateAsync(ReservaCreateDTO reservaCreateDto, CancellationToken ct = default)
         {
+            var reservaDto = new ReservaDTO
+            {
+                IdCliente = reservaCreateDto.IdCliente,
+                IdSucursal = reservaCreateDto.IdSucursal,
+                FechaInicio = reservaCreateDto.FechaInicio,
+                FechaFin = reservaCreateDto.FechaFin,
+                SubtotalReserva = reservaCreateDto.SubtotalReserva,
+                ValorIva = reservaCreateDto.ValorIva,
+                TotalReserva = reservaCreateDto.TotalReserva,
+                DescuentoAplicado = reservaCreateDto.DescuentoAplicado,
+                SaldoPendiente = reservaCreateDto.SaldoPendiente,
+                OrigenCanalReserva = reservaCreateDto.OrigenCanalReserva,
+                EstadoReserva = reservaCreateDto.EstadoReserva,
+                Observaciones = reservaCreateDto.Observaciones ?? string.Empty,
+                EsWalkin = reservaCreateDto.EsWalkin,
+                Habitaciones = reservaCreateDto.Habitaciones
+            };
+
             ReservaValidator.Validate(reservaDto);
             var dataModel = reservaDto.ToDataModel();
             var created = await _reservaDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(ReservaDTO reservaDto, CancellationToken ct = default)
+        public async Task UpdateAsync(ReservaUpdateDTO reservaUpdateDto, CancellationToken ct = default)
         {
+            var reservaDto = new ReservaDTO
+            {
+                IdReserva = reservaUpdateDto.IdReserva,
+                FechaInicio = reservaUpdateDto.FechaInicio,
+                FechaFin = reservaUpdateDto.FechaFin,
+                SubtotalReserva = reservaUpdateDto.SubtotalReserva,
+                ValorIva = reservaUpdateDto.ValorIva,
+                TotalReserva = reservaUpdateDto.TotalReserva,
+                DescuentoAplicado = reservaUpdateDto.DescuentoAplicado,
+                SaldoPendiente = reservaUpdateDto.SaldoPendiente,
+                EstadoReserva = reservaUpdateDto.EstadoReserva,
+                Observaciones = reservaUpdateDto.Observaciones ?? string.Empty
+            };
+
             ReservaValidator.Validate(reservaDto);
-            var existing = await _reservaDataService.GetByIdAsync(reservaDto.IdReserva, ct);
+            var existing = await _reservaDataService.GetByIdAsync(reservaUpdateDto.IdReserva, ct);
             if (existing == null)
-                throw new NotFoundException("RES-004", $"No se encontró la reserva con ID {reservaDto.IdReserva}.");
-            
+                throw new NotFoundException("RES-004", $"No se encontró la reserva con ID {reservaUpdateDto.IdReserva}.");
+
             // Solo actualizamos los campos permitidos en la actualización
             existing.FechaInicio = reservaDto.FechaInicio;
             existing.FechaFin = reservaDto.FechaFin;
@@ -81,7 +113,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
             existing.SaldoPendiente = reservaDto.SaldoPendiente;
             existing.EstadoReserva = reservaDto.EstadoReserva;
             existing.Observaciones = reservaDto.Observaciones;
-            
+
             await _reservaDataService.UpdateAsync(existing, ct);
         }
 

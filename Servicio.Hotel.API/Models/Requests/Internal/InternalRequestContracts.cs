@@ -302,10 +302,9 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
 
     public static class InternalRequestContractsMapper
     {
-        public static UsuarioDTO ToDto(this UsuarioCreateRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Seguridad.UsuarioCreateDTO ToCreateDto(this UsuarioCreateRequest request)
             => new()
             {
-                IdUsuario = id ?? 0,
                 IdCliente = request.IdCliente,
                 Username = request.Username,
                 Correo = request.Correo,
@@ -316,7 +315,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Roles = request.Roles
             };
 
-        public static UsuarioDTO ToDto(this UsuarioUpdateRequest request, int id)
+        public static Servicio.Hotel.Business.DTOs.Seguridad.UsuarioUpdateDTO ToUpdateDto(this UsuarioUpdateRequest request, int id)
             => new()
             {
                 IdUsuario = id,
@@ -328,45 +327,53 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Roles = request.Roles
             };
 
-        public static RolDTO ToDto(this RolUpsertRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Seguridad.RolCreateDTO ToCreateDto(this RolUpsertRequest request)
             => new()
             {
-                IdRol = id ?? 0,
                 NombreRol = request.NombreRol,
                 DescripcionRol = request.DescripcionRol,
                 EstadoRol = request.EstadoRol,
                 Activo = request.Activo
             };
 
-        public static ClienteDTO ToDto(this ClienteCreateRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Seguridad.RolUpdateDTO ToUpdateDto(this RolUpsertRequest request, int id)
             => new()
             {
-                IdCliente = id ?? 0,
+                IdRol = id,
+                NombreRol = request.NombreRol,
+                DescripcionRol = request.DescripcionRol,
+                EstadoRol = request.EstadoRol,
+                Activo = request.Activo
+            };
+
+        public static Servicio.Hotel.Business.DTOs.Reservas.ClienteCreateDTO ToCreateDto(this ClienteCreateRequest request)
+            => new()
+            {
                 TipoIdentificacion = request.TipoIdentificacion,
                 NumeroIdentificacion = request.NumeroIdentificacion,
                 Nombres = request.Nombres,
                 Apellidos = request.Apellidos,
-                RazonSocial = request.RazonSocial ?? string.Empty,
+                RazonSocial = request.RazonSocial,
                 Correo = request.Correo,
-                Telefono = request.Telefono ?? string.Empty,
-                Direccion = request.Direccion ?? string.Empty,
+                Telefono = request.Telefono,
+                Direccion = request.Direccion,
                 Estado = request.Estado
             };
 
-        public static ClienteDTO ToDto(this ClienteUpdateRequest request, int id)
+        public static Servicio.Hotel.Business.DTOs.Reservas.ClienteUpdateDTO ToUpdateDto(this ClienteUpdateRequest request, int id)
             => new()
             {
                 IdCliente = id,
                 Nombres = request.Nombres,
                 Apellidos = request.Apellidos,
-                RazonSocial = request.RazonSocial ?? string.Empty,
+                RazonSocial = request.RazonSocial,
                 Correo = request.Correo,
-                Telefono = request.Telefono ?? string.Empty,
-                Direccion = request.Direccion ?? string.Empty,
+                Telefono = request.Telefono,
+                Direccion = request.Direccion,
                 Estado = request.Estado
             };
 
-        public static ReservaDTO ToDto(this ReservaCreateRequest request)
+        public static Servicio.Hotel.Business.DTOs.Reservas.ReservaCreateDTO ToCreateDto(this ReservaCreateRequest request)
             => new()
             {
                 IdCliente = request.IdCliente,
@@ -385,7 +392,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Habitaciones = request.Habitaciones
             };
 
-        public static ReservaDTO ToDto(this ReservaUpdateRequest request, int id)
+        public static Servicio.Hotel.Business.DTOs.Reservas.ReservaUpdateDTO ToUpdateDto(this ReservaUpdateRequest request, int id)
             => new()
             {
                 IdReserva = id,
@@ -400,10 +407,9 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Observaciones = request.Observaciones ?? string.Empty
             };
 
-        public static HabitacionDTO ToDto(this HabitacionCreateRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.HabitacionCreateDTO ToCreateDto(this HabitacionCreateRequest request)
             => new()
             {
-                IdHabitacion = id ?? 0,
                 IdSucursal = request.IdSucursal,
                 IdTipoHabitacion = request.IdTipoHabitacion,
                 NumeroHabitacion = request.NumeroHabitacion,
@@ -414,7 +420,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 EstadoHabitacion = request.EstadoHabitacion
             };
 
-        public static HabitacionDTO ToDto(this HabitacionUpdateRequest request, int id)
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.HabitacionUpdateDTO ToUpdateDto(this HabitacionUpdateRequest request, int id)
             => new()
             {
                 IdHabitacion = id,
@@ -427,10 +433,9 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 EstadoHabitacion = request.EstadoHabitacion
             };
 
-        public static TarifaDTO ToDto(this TarifaUpsertRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.TarifaCreateDTO ToCreateDto(this TarifaUpsertRequest request)
             => new()
             {
-                IdTarifa = id ?? 0,
                 CodigoTarifa = request.CodigoTarifa,
                 IdSucursal = request.IdSucursal,
                 IdTipoHabitacion = request.IdTipoHabitacion,
@@ -447,13 +452,32 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 EstadoTarifa = request.EstadoTarifa
             };
 
-        public static TipoHabitacionDTO ToDto(this TipoHabitacionUpsertRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.TarifaUpdateDTO ToUpdateDto(this TarifaUpsertRequest request, int id)
             => new()
             {
-                IdTipoHabitacion = id ?? 0,
+                IdTarifa = id,
+                CodigoTarifa = request.CodigoTarifa,
+                IdSucursal = request.IdSucursal,
+                IdTipoHabitacion = request.IdTipoHabitacion,
+                NombreTarifa = request.NombreTarifa,
+                CanalTarifa = request.CanalTarifa,
+                FechaInicio = request.FechaInicio,
+                FechaFin = request.FechaFin,
+                PrecioPorNoche = request.PrecioPorNoche,
+                PorcentajeIva = request.PorcentajeIva,
+                MinNoches = request.MinNoches,
+                MaxNoches = request.MaxNoches,
+                PermitePortalPublico = request.PermitePortalPublico,
+                Prioridad = request.Prioridad,
+                EstadoTarifa = request.EstadoTarifa
+            };
+
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.TipoHabitacionCreateDTO ToCreateDto(this TipoHabitacionUpsertRequest request)
+            => new()
+            {
                 CodigoTipoHabitacion = request.CodigoTipoHabitacion,
                 NombreTipoHabitacion = request.NombreTipoHabitacion,
-                Descripcion = request.Descripcion ?? string.Empty,
+                Descripcion = request.Descripcion,
                 CapacidadAdultos = request.CapacidadAdultos,
                 CapacidadNinos = request.CapacidadNinos,
                 CapacidadTotal = request.CapacidadTotal,
@@ -464,29 +488,45 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 EstadoTipoHabitacion = request.EstadoTipoHabitacion
             };
 
-        public static SucursalDTO ToDto(this SucursalUpsertRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.TipoHabitacionUpdateDTO ToUpdateDto(this TipoHabitacionUpsertRequest request, int id)
             => new()
             {
-                IdSucursal = id ?? 0,
+                IdTipoHabitacion = id,
+                CodigoTipoHabitacion = request.CodigoTipoHabitacion,
+                NombreTipoHabitacion = request.NombreTipoHabitacion,
+                Descripcion = request.Descripcion,
+                CapacidadAdultos = request.CapacidadAdultos,
+                CapacidadNinos = request.CapacidadNinos,
+                CapacidadTotal = request.CapacidadTotal,
+                TipoCama = request.TipoCama,
+                AreaM2 = request.AreaM2,
+                PermiteEventos = request.PermiteEventos,
+                PermiteReservaPublica = request.PermiteReservaPublica,
+                EstadoTipoHabitacion = request.EstadoTipoHabitacion
+            };
+
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.SucursalCreateDTO ToCreateDto(this SucursalUpsertRequest request)
+            => new()
+            {
                 CodigoSucursal = request.CodigoSucursal,
                 NombreSucursal = request.NombreSucursal,
-                DescripcionSucursal = request.DescripcionSucursal ?? string.Empty,
-                DescripcionCorta = request.DescripcionCorta ?? string.Empty,
-                TipoAlojamiento = request.TipoAlojamiento ?? string.Empty,
+                DescripcionSucursal = request.DescripcionSucursal,
+                DescripcionCorta = request.DescripcionCorta,
+                TipoAlojamiento = request.TipoAlojamiento,
                 Estrellas = request.Estrellas,
-                CategoriaViaje = request.CategoriaViaje ?? string.Empty,
-                Pais = request.Pais ?? string.Empty,
-                Provincia = request.Provincia ?? string.Empty,
-                Ciudad = request.Ciudad ?? string.Empty,
-                Ubicacion = request.Ubicacion ?? string.Empty,
-                Direccion = request.Direccion ?? string.Empty,
-                CodigoPostal = request.CodigoPostal ?? string.Empty,
-                Telefono = request.Telefono ?? string.Empty,
-                Correo = request.Correo ?? string.Empty,
+                CategoriaViaje = request.CategoriaViaje,
+                Pais = request.Pais,
+                Provincia = request.Provincia,
+                Ciudad = request.Ciudad,
+                Ubicacion = request.Ubicacion,
+                Direccion = request.Direccion,
+                CodigoPostal = request.CodigoPostal,
+                Telefono = request.Telefono,
+                Correo = request.Correo,
                 Latitud = request.Latitud,
                 Longitud = request.Longitud,
-                HoraCheckin = request.HoraCheckin ?? string.Empty,
-                HoraCheckout = request.HoraCheckout ?? string.Empty,
+                HoraCheckin = request.HoraCheckin,
+                HoraCheckout = request.HoraCheckout,
                 CheckinAnticipado = request.CheckinAnticipado,
                 CheckoutTardio = request.CheckoutTardio,
                 AceptaNinos = request.AceptaNinos,
@@ -496,22 +536,72 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 EstadoSucursal = request.EstadoSucursal
             };
 
-        public static CatalogoServicioDTO ToDto(this CatalogoServicioUpsertRequest request, int? id = null)
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.SucursalUpdateDTO ToUpdateDto(this SucursalUpsertRequest request, int id)
             => new()
             {
-                IdCatalogo = id ?? 0,
+                IdSucursal = id,
+                CodigoSucursal = request.CodigoSucursal,
+                NombreSucursal = request.NombreSucursal,
+                DescripcionSucursal = request.DescripcionSucursal,
+                DescripcionCorta = request.DescripcionCorta,
+                TipoAlojamiento = request.TipoAlojamiento,
+                Estrellas = request.Estrellas,
+                CategoriaViaje = request.CategoriaViaje,
+                Pais = request.Pais,
+                Provincia = request.Provincia,
+                Ciudad = request.Ciudad,
+                Ubicacion = request.Ubicacion,
+                Direccion = request.Direccion,
+                CodigoPostal = request.CodigoPostal,
+                Telefono = request.Telefono,
+                Correo = request.Correo,
+                Latitud = request.Latitud,
+                Longitud = request.Longitud,
+                HoraCheckin = request.HoraCheckin,
+                HoraCheckout = request.HoraCheckout,
+                CheckinAnticipado = request.CheckinAnticipado,
+                CheckoutTardio = request.CheckoutTardio,
+                AceptaNinos = request.AceptaNinos,
+                EdadMinimaHuesped = request.EdadMinimaHuesped,
+                PermiteMascotas = request.PermiteMascotas,
+                SePermiteFumar = request.SePermiteFumar,
+                EstadoSucursal = request.EstadoSucursal
+            };
+
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.CatalogoServicioCreateDTO ToCreateDto(this CatalogoServicioUpsertRequest request)
+            => new()
+            {
                 IdSucursal = request.IdSucursal,
                 CodigoCatalogo = request.CodigoCatalogo,
                 NombreCatalogo = request.NombreCatalogo,
                 TipoCatalogo = request.TipoCatalogo,
-                CategoriaCatalogo = request.CategoriaCatalogo ?? string.Empty,
-                DescripcionCatalogo = request.DescripcionCatalogo ?? string.Empty,
+                CategoriaCatalogo = request.CategoriaCatalogo,
+                DescripcionCatalogo = request.DescripcionCatalogo,
                 PrecioBase = request.PrecioBase,
                 AplicaIva = request.AplicaIva,
                 Disponible24h = request.Disponible24h,
                 HoraInicio = request.HoraInicio,
                 HoraFin = request.HoraFin,
-                IconoUrl = request.IconoUrl ?? string.Empty,
+                IconoUrl = request.IconoUrl,
+                EstadoCatalogo = request.EstadoCatalogo
+            };
+
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.CatalogoServicioUpdateDTO ToUpdateDto(this CatalogoServicioUpsertRequest request, int id)
+            => new()
+            {
+                IdCatalogo = id,
+                IdSucursal = request.IdSucursal,
+                CodigoCatalogo = request.CodigoCatalogo,
+                NombreCatalogo = request.NombreCatalogo,
+                TipoCatalogo = request.TipoCatalogo,
+                CategoriaCatalogo = request.CategoriaCatalogo,
+                DescripcionCatalogo = request.DescripcionCatalogo,
+                PrecioBase = request.PrecioBase,
+                AplicaIva = request.AplicaIva,
+                Disponible24h = request.Disponible24h,
+                HoraInicio = request.HoraInicio,
+                HoraFin = request.HoraFin,
+                IconoUrl = request.IconoUrl,
                 EstadoCatalogo = request.EstadoCatalogo
             };
 

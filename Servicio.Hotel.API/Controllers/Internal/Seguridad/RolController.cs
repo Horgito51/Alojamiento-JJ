@@ -35,16 +35,16 @@ namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
         [HttpPost]
         public async Task<ActionResult<RolDTO>> Create([FromBody] RolUpsertRequest request)
         {
-            var rolDto = request.ToDto();
-            var nuevoRol = await _rolService.CreateAsync(rolDto);
+            var rolCreateDto = request.ToCreateDto();
+            var nuevoRol = await _rolService.CreateAsync(rolCreateDto);
             return CreatedAtAction(nameof(GetById), new { id = nuevoRol.IdRol }, nuevoRol);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] RolUpsertRequest request)
         {
-            var rolDto = request.ToDto(id);
-            await _rolService.UpdateAsync(rolDto);
+            var rolUpdateDto = request.ToUpdateDto(id);
+            await _rolService.UpdateAsync(rolUpdateDto);
             return NoContent();
         }
 

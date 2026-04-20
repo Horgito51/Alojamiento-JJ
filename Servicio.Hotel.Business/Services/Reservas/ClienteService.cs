@@ -48,30 +48,27 @@ namespace Servicio.Hotel.Business.Services.Reservas
             };
         }
 
-        public async Task<ClienteDTO> CreateAsync(ClienteDTO clienteDto, CancellationToken ct = default)
+        public async Task<ClienteDTO> CreateAsync(ClienteCreateDTO clienteCreateDto, CancellationToken ct = default)
         {
-            ClienteValidator.Validate(clienteDto);
-            var dataModel = clienteDto.ToDataModel();
+            var dataModel = clienteCreateDto.ToDataModel();
             var created = await _clienteDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(ClienteDTO clienteDto, CancellationToken ct = default)
+        public async Task UpdateAsync(ClienteUpdateDTO clienteUpdateDto, CancellationToken ct = default)
         {
-            ClienteValidator.Validate(clienteDto);
-            var existing = await _clienteDataService.GetByIdAsync(clienteDto.IdCliente, ct);
+            var existing = await _clienteDataService.GetByIdAsync(clienteUpdateDto.IdCliente, ct);
             if (existing == null)
-                throw new NotFoundException("CLI-003", $"No se encontró el cliente con ID {clienteDto.IdCliente}.");
-            
-            // Solo actualizamos los campos permitidos en la actualización
-            existing.Nombres = clienteDto.Nombres;
-            existing.Apellidos = clienteDto.Apellidos;
-            existing.RazonSocial = clienteDto.RazonSocial;
-            existing.Correo = clienteDto.Correo;
-            existing.Telefono = clienteDto.Telefono;
-            existing.Direccion = clienteDto.Direccion;
-            existing.Estado = clienteDto.Estado;
-            
+                throw new NotFoundException("CLI-003", $"No se encontró el cliente con ID {clienteUpdateDto.IdCliente}.");
+
+            existing.Nombres = clienteUpdateDto.Nombres;
+            existing.Apellidos = clienteUpdateDto.Apellidos;
+            existing.RazonSocial = clienteUpdateDto.RazonSocial ?? string.Empty;
+            existing.Correo = clienteUpdateDto.Correo;
+            existing.Telefono = clienteUpdateDto.Telefono ?? string.Empty;
+            existing.Direccion = clienteUpdateDto.Direccion ?? string.Empty;
+            existing.Estado = clienteUpdateDto.Estado;
+
             await _clienteDataService.UpdateAsync(existing, ct);
         }
 

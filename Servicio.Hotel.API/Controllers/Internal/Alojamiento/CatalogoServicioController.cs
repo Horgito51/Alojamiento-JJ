@@ -29,14 +29,14 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         [HttpPost]
         public async Task<ActionResult<CatalogoServicioDTO>> Create([FromBody] CatalogoServicioUpsertRequest request)
         {
-            var created = await _service.CreateAsync(request.ToDto());
+            var created = await _service.CreateAsync(request.ToCreateDto());
             return CreatedAtAction(nameof(GetById), new { id = created.IdCatalogo }, created);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CatalogoServicioUpsertRequest request)
         {
-            await _service.UpdateAsync(request.ToDto(id));
+            await _service.UpdateAsync(request.ToUpdateDto(id));
             return NoContent();
         }
 

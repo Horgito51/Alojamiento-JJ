@@ -39,7 +39,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         [HttpPost]
         public async Task<ActionResult<HabitacionDTO>> Create([FromBody] HabitacionCreateRequest request)
         {
-            var dto = request.ToDto();
+            var dto = request.ToCreateDto();
             var result = await _habitacionService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdHabitacion }, result);
         }
@@ -47,7 +47,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] HabitacionUpdateRequest request)
         {
-            var dto = request.ToDto(id);
+            var dto = request.ToUpdateDto(id);
             await _habitacionService.UpdateAsync(dto);
             return NoContent();
         }
