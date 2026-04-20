@@ -25,13 +25,13 @@ namespace Servicio.Hotel.DataManagement.Facturacion.Services
         public async Task<FacturaDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _facturaRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<FacturaDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _facturaRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<FacturaDataModel>> GetByFiltroAsync(FacturaFiltroDataModel filtro, int pageNumber, int pageSize, CancellationToken ct = default)

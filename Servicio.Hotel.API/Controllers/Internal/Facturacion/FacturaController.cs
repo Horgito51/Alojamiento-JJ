@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Facturacion
 {
     [ApiController]
-    [Route("api/v1/internal/facturas")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/facturas")]
     public class FacturaController : ControllerBase
     {
         private readonly IFacturaService _facturaService;

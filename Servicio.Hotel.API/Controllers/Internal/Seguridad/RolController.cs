@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Seguridad;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
 {
     [ApiController]
-    [Route("api/v1/internal/roles")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/roles")]
     public class RolController : ControllerBase
     {
         private readonly IRolService _rolService;

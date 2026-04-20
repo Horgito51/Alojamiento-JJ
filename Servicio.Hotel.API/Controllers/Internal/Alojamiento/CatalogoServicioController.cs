@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
 {
     [ApiController]
-    [Route("api/v1/internal/catalogo-servicios")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/catalogo-servicios")]
     public class CatalogoServicioController : ControllerBase
     {
         private readonly ICatalogoServicioService _service;

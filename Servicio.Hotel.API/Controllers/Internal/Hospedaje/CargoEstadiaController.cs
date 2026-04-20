@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.Business.Interfaces.Hospedaje;
 using System.Threading.Tasks;
 
 namespace Servicio.Hotel.API.Controllers.Internal.Hospedaje
 {
     [ApiController]
-    [Route("api/v1/internal/cargos-estadia")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/cargos-estadia")]
     public class CargoEstadiaController : ControllerBase
     {
         private readonly IEstadiaService _estadiaService;

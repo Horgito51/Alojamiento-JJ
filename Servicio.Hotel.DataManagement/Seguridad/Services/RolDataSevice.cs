@@ -25,13 +25,13 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
         public async Task<RolDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _rolRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<RolDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _rolRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<RolDataModel>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
@@ -73,7 +73,7 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
         public async Task<RolDataModel> GetByNombreAsync(string nombre, CancellationToken ct = default)
         {
             var entity = await _rolRepository.GetByNombreAsync(nombre, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task InhabilitarAsync(int id, string motivo, string usuario, CancellationToken ct = default)

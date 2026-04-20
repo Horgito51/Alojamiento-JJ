@@ -27,19 +27,19 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
         public async Task<ReservaDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _reservaRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<ReservaDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _reservaRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<ReservaDataModel> GetByCodigoAsync(string codigo, CancellationToken ct = default)
         {
             var entity = await _reservaRepository.GetByCodigoAsync(codigo, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<ReservaDataModel>> GetByFiltroAsync(ReservaFiltroDataModel filtro, int pageNumber, int pageSize, CancellationToken ct = default)

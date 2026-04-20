@@ -25,13 +25,13 @@ namespace Servicio.Hotel.DataManagement.Facturacion.Services
         public async Task<PagoDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _pagoRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<PagoDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _pagoRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<PagoDataModel>> GetByFacturaAsync(int idFactura, int pageNumber, int pageSize, CancellationToken ct = default)

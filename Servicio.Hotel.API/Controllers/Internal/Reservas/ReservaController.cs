@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.Interfaces.Reservas;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Reservas
 {
     [ApiController]
-    [Route("api/v1/internal/reservas")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/reservas")]
     public class ReservaController : ControllerBase
     {
         private readonly IReservaService _reservaService;

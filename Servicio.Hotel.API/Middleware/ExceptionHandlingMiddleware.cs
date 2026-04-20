@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Servicio.Hotel.API.Models.Common;
 
 namespace Servicio.Hotel.API.Middleware
@@ -33,6 +34,9 @@ namespace Servicio.Hotel.API.Middleware
         {
             _logger.LogError(exception, "Ocurrió una excepción no controlada: {Message}", exception.Message);
 
+            var isDevelopment = context.RequestServices
+                .GetService<IWebHostEnvironment>()?.IsDevelopment() ?? false;
+
             // Definir código de estado y mensaje base según el tipo de excepción
             var (statusCode, message, validationErrors) = exception switch
             {
@@ -42,9 +46,13 @@ namespace Servicio.Hotel.API.Middleware
                 Servicio.Hotel.Business.Exceptions.BusinessException bizEx => (HttpStatusCode.UnprocessableEntity, bizEx.Message, null),
                 KeyNotFoundException => (HttpStatusCode.NotFound, "El recurso solicitado no fue encontrado.", null),
                 UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "No autorizado.", null),
-                ArgumentException => (HttpStatusCode.BadRequest, "Solicitud inválida.", null),
+                ArgumentException argEx => (HttpStatusCode.BadRequest, isDevelopment ? argEx.Message : "Solicitud inválida.", null),
                 InvalidOperationException => (HttpStatusCode.Conflict, "Conflicto con el estado actual.", null),
-                _ => (HttpStatusCode.InternalServerError, "Ha ocurrido un error interno en el servidor.", null)
+                _ => (HttpStatusCode.InternalServerError,
+                      isDevelopment
+                          ? $"{exception.GetType().Name}: {exception.Message}{(exception.InnerException != null ? $" | Inner: {exception.InnerException.Message}" : "")}"
+                          : "Ha ocurrido un error interno en el servidor.",
+                      null)
             };
 
             // Construir respuesta estandarizada con ApiErrorResponse

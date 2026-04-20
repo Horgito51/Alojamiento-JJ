@@ -27,13 +27,13 @@ namespace Servicio.Hotel.DataManagement.Hospedaje.Services
         public async Task<EstadiaDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _estadiaRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<EstadiaDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _estadiaRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<EstadiaDataModel>> GetByFiltroAsync(EstadiaFiltroDataModel filtro, int pageNumber, int pageSize, CancellationToken ct = default)

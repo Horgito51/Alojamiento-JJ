@@ -25,13 +25,13 @@ namespace Servicio.Hotel.DataManagement.Valoraciones.Services
         public async Task<ValoracionDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _valoracionRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<ValoracionDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _valoracionRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<ValoracionDataModel>> GetByFiltroAsync(ValoracionFiltroDataModel filtro, int pageNumber, int pageSize, CancellationToken ct = default)

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Valoraciones;
 using Servicio.Hotel.Business.Interfaces.Valoraciones;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Valoraciones
 {
     [ApiController]
-    [Route("api/v1/internal/valoraciones")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/valoraciones")]
     public class ValoracionController : ControllerBase
     {
         private readonly IValoracionService _valoracionService;

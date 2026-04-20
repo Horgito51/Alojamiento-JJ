@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Pagos
 {
     [ApiController]
-    [Route("api/v1/internal/pagos")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/internal/pagos")]
     public class PagoController : ControllerBase
     {
         private readonly IPagoService _pagoService;
@@ -19,10 +21,9 @@ namespace Servicio.Hotel.API.Controllers.Internal.Pagos
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PagoDTO>>> GetAll()
+        public async Task<ActionResult<IEnumerable<PagoDTO>>> GetAll([FromQuery] int facturaId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            // Paginación por defecto
-            var result = await _pagoService.GetByFacturaAsync(0, 1, 50); 
+            var result = await _pagoService.GetByFacturaAsync(facturaId, page, pageSize);
             return Ok(result.Items);
         }
 

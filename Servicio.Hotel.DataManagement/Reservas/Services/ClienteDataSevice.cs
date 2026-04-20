@@ -25,13 +25,13 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
         public async Task<ClienteDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _clienteRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<ClienteDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _clienteRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<ClienteDataModel>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
@@ -73,13 +73,13 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
         public async Task<ClienteDataModel> GetByIdentificacionAsync(string tipo, string numero, CancellationToken ct = default)
         {
             var entity = await _clienteRepository.GetByIdentificacionAsync(tipo, numero, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<ClienteDataModel> GetByCorreoAsync(string correo, CancellationToken ct = default)
         {
             var entity = await _clienteRepository.GetByCorreoAsync(correo, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task InhabilitarAsync(int id, string motivo, string usuario, CancellationToken ct = default)

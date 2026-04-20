@@ -26,13 +26,13 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         public async Task<TarifaDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _tarifaRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<TarifaDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _tarifaRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<TarifaDataModel>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
@@ -74,7 +74,7 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         public async Task<TarifaDataModel> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default)
         {
             var entity = await _tarifaRepository.GetTarifaVigenteAsync(idSucursal, idTipoHabitacion, fecha, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<IEnumerable<TarifaDataModel>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default)

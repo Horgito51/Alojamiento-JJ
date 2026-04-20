@@ -26,13 +26,13 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         public async Task<HabitacionDataModel> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _habitacionRepository.GetByIdAsync(id, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<HabitacionDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default)
         {
             var entity = await _habitacionRepository.GetByGuidAsync(guid, ct);
-            return entity.ToModel();
+            return entity?.ToModel();
         }
 
         public async Task<DataPagedResult<HabitacionDataModel>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
