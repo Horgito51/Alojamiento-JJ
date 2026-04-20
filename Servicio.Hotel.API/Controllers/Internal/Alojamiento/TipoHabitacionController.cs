@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
     [ApiController]
     [Authorize]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/internal/[controller]")]
+    [Route("api/v{version:apiVersion}/internal/tipos-habitacion")]
     public class TipoHabitacionController : ControllerBase
     {
         private readonly ITipoHabitacionService _tipoHabitacionService;
@@ -36,16 +37,17 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         }
 
         [HttpPost]
-        public async Task<ActionResult<TipoHabitacionDTO>> Create([FromBody] TipoHabitacionDTO dto)
+        public async Task<ActionResult<TipoHabitacionDTO>> Create([FromBody] TipoHabitacionUpsertRequest request)
         {
+            var dto = request.ToDto();
             var result = await _tipoHabitacionService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdTipoHabitacion }, result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] TipoHabitacionDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] TipoHabitacionUpsertRequest request)
         {
-            if (id != dto.IdTipoHabitacion) return BadRequest();
+            var dto = request.ToDto(id);
             await _tipoHabitacionService.UpdateAsync(dto);
             return NoContent();
         }

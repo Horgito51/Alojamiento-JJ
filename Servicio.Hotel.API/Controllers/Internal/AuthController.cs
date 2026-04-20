@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Seguridad;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace Servicio.Hotel.API.Controllers.Internal
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/internal/[controller]")]
+    [Route("api/v{version:apiVersion}/internal/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -26,16 +27,16 @@ namespace Servicio.Hotel.API.Controllers.Internal
         }
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
-            var response = await _authService.RefreshTokenAsync(refreshToken);
+            var response = await _authService.RefreshTokenAsync(request.RefreshToken);
             return Ok(response);
         }
 
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromBody] string refreshToken)
+        public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
         {
-            await _authService.LogoutAsync(refreshToken);
+            await _authService.LogoutAsync(request.RefreshToken);
             return NoContent();
         }
     }

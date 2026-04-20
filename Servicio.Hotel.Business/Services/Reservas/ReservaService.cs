@@ -70,8 +70,19 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var existing = await _reservaDataService.GetByIdAsync(reservaDto.IdReserva, ct);
             if (existing == null)
                 throw new NotFoundException("RES-004", $"No se encontró la reserva con ID {reservaDto.IdReserva}.");
-            var dataModel = reservaDto.ToDataModel();
-            await _reservaDataService.UpdateAsync(dataModel, ct);
+            
+            // Solo actualizamos los campos permitidos en la actualización
+            existing.FechaInicio = reservaDto.FechaInicio;
+            existing.FechaFin = reservaDto.FechaFin;
+            existing.SubtotalReserva = reservaDto.SubtotalReserva;
+            existing.ValorIva = reservaDto.ValorIva;
+            existing.TotalReserva = reservaDto.TotalReserva;
+            existing.DescuentoAplicado = reservaDto.DescuentoAplicado;
+            existing.SaldoPendiente = reservaDto.SaldoPendiente;
+            existing.EstadoReserva = reservaDto.EstadoReserva;
+            existing.Observaciones = reservaDto.Observaciones;
+            
+            await _reservaDataService.UpdateAsync(existing, ct);
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)

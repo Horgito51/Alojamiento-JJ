@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Seguridad;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
 {
     [ApiController]
-    [Route("api/v1/internal/[controller]")]
+    [Route("api/v1/internal/roles")]
     public class RolController : ControllerBase
     {
         private readonly IRolService _rolService;
@@ -32,16 +33,17 @@ namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
         }
 
         [HttpPost]
-        public async Task<ActionResult<RolDTO>> Create([FromBody] RolDTO rolDto)
+        public async Task<ActionResult<RolDTO>> Create([FromBody] RolUpsertRequest request)
         {
+            var rolDto = request.ToDto();
             var nuevoRol = await _rolService.CreateAsync(rolDto);
             return CreatedAtAction(nameof(GetById), new { id = nuevoRol.IdRol }, nuevoRol);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] RolDTO rolDto)
+        public async Task<IActionResult> Update(int id, [FromBody] RolUpsertRequest request)
         {
-            if (id != rolDto.IdRol) return BadRequest();
+            var rolDto = request.ToDto(id);
             await _rolService.UpdateAsync(rolDto);
             return NoContent();
         }

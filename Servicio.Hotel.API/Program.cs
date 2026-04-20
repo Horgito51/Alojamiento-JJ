@@ -11,6 +11,21 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (jwtSettings is null)
+{
+    throw new InvalidOperationException("La configuración 'Jwt' es obligatoria.");
+}
+
+if (allowedOrigins is null || allowedOrigins.Length == 0)
+{
+    throw new InvalidOperationException("La configuración 'Cors:AllowedOrigins' debe contener al menos un origen.");
+}
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' es obligatoria.");
+}
+
 // 2. Registrar servicios de capa de datos (DbContext, repositorios)
 builder.Services.AddDataAccessServices(connectionString);
 

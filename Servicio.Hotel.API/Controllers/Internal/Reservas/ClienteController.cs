@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.Interfaces.Reservas;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Reservas
     [ApiController]
     [Authorize]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/internal/[controller]")]
+    [Route("api/v{version:apiVersion}/internal/clientes")]
     public class ClienteController : ControllerBase
     {
         private readonly IClienteService _clienteService;
@@ -36,16 +37,17 @@ namespace Servicio.Hotel.API.Controllers.Internal.Reservas
         }
 
         [HttpPost]
-        public async Task<ActionResult<ClienteDTO>> Create([FromBody] ClienteDTO dto)
+        public async Task<ActionResult<ClienteDTO>> Create([FromBody] ClienteCreateRequest request)
         {
+            var dto = request.ToDto();
             var result = await _clienteService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdCliente }, result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ClienteDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] ClienteUpdateRequest request)
         {
-            if (id != dto.IdCliente) return BadRequest();
+            var dto = request.ToDto(id);
             await _clienteService.UpdateAsync(dto);
             return NoContent();
         }

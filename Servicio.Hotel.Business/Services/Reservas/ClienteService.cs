@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -62,8 +62,17 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var existing = await _clienteDataService.GetByIdAsync(clienteDto.IdCliente, ct);
             if (existing == null)
                 throw new NotFoundException("CLI-003", $"No se encontró el cliente con ID {clienteDto.IdCliente}.");
-            var dataModel = clienteDto.ToDataModel();
-            await _clienteDataService.UpdateAsync(dataModel, ct);
+            
+            // Solo actualizamos los campos permitidos en la actualización
+            existing.Nombres = clienteDto.Nombres;
+            existing.Apellidos = clienteDto.Apellidos;
+            existing.RazonSocial = clienteDto.RazonSocial;
+            existing.Correo = clienteDto.Correo;
+            existing.Telefono = clienteDto.Telefono;
+            existing.Direccion = clienteDto.Direccion;
+            existing.Estado = clienteDto.Estado;
+            
+            await _clienteDataService.UpdateAsync(existing, ct);
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)

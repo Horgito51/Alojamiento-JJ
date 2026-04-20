@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Facturacion
 {
     [ApiController]
-    [Route("api/v1/internal/[controller]")]
+    [Route("api/v1/internal/facturas")]
     public class FacturaController : ControllerBase
     {
         private readonly IFacturaService _facturaService;
@@ -46,9 +47,9 @@ namespace Servicio.Hotel.API.Controllers.Internal.Facturacion
         }
 
         [HttpPatch("{id}/anular")]
-        public async Task<IActionResult> Anular(int id, [FromBody] string motivo)
+        public async Task<IActionResult> Anular(int id, [FromBody] AnularFacturaRequest request)
         {
-            await _facturaService.AnularAsync(id, motivo, "Sistema");
+            await _facturaService.AnularAsync(id, request.Motivo, "Sistema");
             return NoContent();
         }
     }

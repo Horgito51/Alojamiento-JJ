@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Hospedaje;
 using Servicio.Hotel.Business.Interfaces.Hospedaje;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Hospedaje
 {
     [ApiController]
-    [Route("api/v1/internal/[controller]")]
+    [Route("api/v1/internal/estadias")]
     public class EstadiaController : ControllerBase
     {
         private readonly IEstadiaService _estadiaService;
@@ -39,9 +40,9 @@ namespace Servicio.Hotel.API.Controllers.Internal.Hospedaje
         }
 
         [HttpPatch("{id}/checkout")]
-        public async Task<IActionResult> Checkout(int id, [FromBody] CheckoutRequest request)
+        public async Task<IActionResult> Checkout(int id, [FromBody] EstadiaCheckoutRequest request)
         {
-            await _estadiaService.RegistrarCheckoutAsync(id, request.Observaciones, request.RequiereMantenimiento, "Sistema");
+            await _estadiaService.RegistrarCheckoutAsync(id, request.Observaciones ?? string.Empty, request.RequiereMantenimiento, "Sistema");
             return NoContent();
         }
 
@@ -53,16 +54,11 @@ namespace Servicio.Hotel.API.Controllers.Internal.Hospedaje
         }
 
         [HttpPost("{id}/cargos")]
-        public async Task<ActionResult<CargoEstadiaDTO>> AddCargo(int id, [FromBody] CargoEstadiaDTO dto)
+        public async Task<ActionResult<CargoEstadiaDTO>> AddCargo(int id, [FromBody] CargoEstadiaCreateRequest request)
         {
+            var dto = request.ToDto(id);
             var result = await _estadiaService.AddCargoAsync(id, dto);
             return Ok(result);
         }
-    }
-
-    public class CheckoutRequest
-    {
-        public string Observaciones { get; set; }
-        public bool RequiereMantenimiento { get; set; }
     }
 }

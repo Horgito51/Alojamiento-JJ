@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Valoraciones;
 using Servicio.Hotel.Business.Interfaces.Valoraciones;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Valoraciones
 {
     [ApiController]
-    [Route("api/v1/internal/[controller]")]
+    [Route("api/v1/internal/valoraciones")]
     public class ValoracionController : ControllerBase
     {
         private readonly IValoracionService _valoracionService;
@@ -32,23 +33,24 @@ namespace Servicio.Hotel.API.Controllers.Internal.Valoraciones
         }
 
         [HttpPost]
-        public async Task<ActionResult<ValoracionDTO>> Create([FromBody] ValoracionDTO dto)
+        public async Task<ActionResult<ValoracionDTO>> Create([FromBody] ValoracionCreateRequest request)
         {
+            var dto = request.ToDto();
             var result = await _valoracionService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdValoracion }, result);
         }
 
         [HttpPatch("{id}/moderar")]
-        public async Task<IActionResult> Moderar(int id, [FromBody] ModeracionRequest request)
+        public async Task<IActionResult> Moderar(int id, [FromBody] ValoracionModeracionRequest request)
         {
-            await _valoracionService.ModerarAsync(id, request.NuevoEstado, request.Motivo, "Sistema");
+            await _valoracionService.ModerarAsync(id, request.NuevoEstado, request.Motivo ?? string.Empty, "Sistema");
             return NoContent();
         }
 
         [HttpPatch("{id}/responder")]
-        public async Task<IActionResult> Responder(int id, [FromBody] string respuesta)
+        public async Task<IActionResult> Responder(int id, [FromBody] ValoracionRespuestaRequest request)
         {
-            await _valoracionService.ResponderAsync(id, respuesta, "Sistema");
+            await _valoracionService.ResponderAsync(id, request.Respuesta, "Sistema");
             return NoContent();
         }
 
@@ -60,9 +62,4 @@ namespace Servicio.Hotel.API.Controllers.Internal.Valoraciones
         }
     }
 
-    public class ModeracionRequest
-    {
-        public string NuevoEstado { get; set; }
-        public string Motivo { get; set; }
-    }
 }

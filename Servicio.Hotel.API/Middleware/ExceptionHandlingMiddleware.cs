@@ -1,4 +1,5 @@
 // Middleware/ExceptionHandlingMiddleware.cs
+using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
 using Servicio.Hotel.API.Models.Common;
@@ -35,7 +36,7 @@ namespace Servicio.Hotel.API.Middleware
             // Definir código de estado y mensaje base según el tipo de excepción
             var (statusCode, message, validationErrors) = exception switch
             {
-                Servicio.Hotel.Business.Exceptions.ValidationException valEx => (HttpStatusCode.BadRequest, valEx.Message, valEx.Errors),
+                Servicio.Hotel.Business.Exceptions.ValidationException valEx => (HttpStatusCode.BadRequest, valEx.Message, valEx.Errors is null ? null : new Dictionary<string, string[]>(valEx.Errors)),
                 Servicio.Hotel.Business.Exceptions.UnauthorizedBusinessException authEx => (HttpStatusCode.Unauthorized, authEx.Message, null),
                 Servicio.Hotel.Business.Exceptions.NotFoundException nfEx => (HttpStatusCode.NotFound, nfEx.Message, null),
                 Servicio.Hotel.Business.Exceptions.BusinessException bizEx => (HttpStatusCode.UnprocessableEntity, bizEx.Message, null),

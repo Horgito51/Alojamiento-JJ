@@ -60,6 +60,8 @@ namespace Servicio.Hotel.API.Extensions
             services.AddScoped<ITipoHabitacionRepository, TipoHabitacionRepository>();
             services.AddScoped<ITarifaRepository, TarifaRepository>();
             services.AddScoped<IHabitacionRepository, HabitacionRepository>();
+            services.AddScoped<ISucursalRepository, SucursalRepository>();
+            services.AddScoped<ICatalogoServicioRepository, CatalogoServicioRepository>();
             services.AddScoped<IValoracionRepository, ValoracionRepository>();
             services.AddScoped<IUsuarioAppRepository, UsuarioAppRepository>();
             services.AddScoped<IRolRepository, RolRepository>();
@@ -73,6 +75,8 @@ namespace Servicio.Hotel.API.Extensions
             services.AddScoped<ITipoHabitacionDataService, TipoHabitacionDataService>();
             services.AddScoped<ITarifaDataService, TarifaDataService>();
             services.AddScoped<IHabitacionDataService, HabitacionDataService>();
+            services.AddScoped<ISucursalDataService, SucursalDataService>();
+            services.AddScoped<ICatalogoServicioDataService, CatalogoServicioDataService>();
             services.AddScoped<IValoracionDataService, ValoracionDataService>();
             services.AddScoped<IUsuarioDataService, UsuarioDataService>();
             services.AddScoped<IRolDataService, RolDataService>();
@@ -87,6 +91,8 @@ namespace Servicio.Hotel.API.Extensions
             services.AddScoped<ITipoHabitacionService, TipoHabitacionService>();
             services.AddScoped<ITarifaService, TarifaService>();
             services.AddScoped<IHabitacionService, HabitacionService>();
+            services.AddScoped<ISucursalService, SucursalService>();
+            services.AddScoped<ICatalogoServicioService, CatalogoServicioService>();
             services.AddScoped<IValoracionService, ValoracionService>();
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IRolService, RolService>();

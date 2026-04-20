@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.Interfaces.Reservas;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Reservas
 {
     [ApiController]
-    [Route("api/v1/internal/[controller]")]
+    [Route("api/v1/internal/reservas")]
     public class ReservaController : ControllerBase
     {
         private readonly IReservaService _reservaService;
@@ -32,10 +33,19 @@ namespace Servicio.Hotel.API.Controllers.Internal.Reservas
         }
 
         [HttpPost]
-        public async Task<ActionResult<ReservaDTO>> Create([FromBody] ReservaDTO dto)
+        public async Task<ActionResult<ReservaDTO>> Create([FromBody] ReservaCreateRequest request)
         {
+            var dto = request.ToDto();
             var result = await _reservaService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdReserva }, result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ReservaUpdateRequest request)
+        {
+            var dto = request.ToDto(id);
+            await _reservaService.UpdateAsync(dto);
+            return NoContent();
         }
 
         [HttpPatch("{id}/confirmar")]
@@ -46,9 +56,9 @@ namespace Servicio.Hotel.API.Controllers.Internal.Reservas
         }
 
         [HttpPatch("{id}/cancelar")]
-        public async Task<IActionResult> Cancel(int id, [FromBody] string motivo)
+        public async Task<IActionResult> Cancel(int id, [FromBody] CancelarReservaRequest request)
         {
-            await _reservaService.CancelarAsync(id, motivo, "Sistema");
+            await _reservaService.CancelarAsync(id, request.Motivo, "Sistema");
             return NoContent();
         }
     }

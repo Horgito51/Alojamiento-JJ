@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Public
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/accommodations")]
     public class AccommodationsController : ControllerBase
     {
         private readonly IHabitacionService _habitacionService;

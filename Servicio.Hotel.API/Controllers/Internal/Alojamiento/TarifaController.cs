@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
     [ApiController]
     [Authorize]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/internal/[controller]")]
+    [Route("api/v{version:apiVersion}/internal/tarifas")]
     public class TarifaController : ControllerBase
     {
         private readonly ITarifaService _tarifaService;
@@ -36,16 +37,17 @@ namespace Servicio.Hotel.API.Controllers.Internal.Alojamiento
         }
 
         [HttpPost]
-        public async Task<ActionResult<TarifaDTO>> Create([FromBody] TarifaDTO dto)
+        public async Task<ActionResult<TarifaDTO>> Create([FromBody] TarifaUpsertRequest request)
         {
+            var dto = request.ToDto();
             var result = await _tarifaService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdTarifa }, result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] TarifaDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] TarifaUpsertRequest request)
         {
-            if (id != dto.IdTarifa) return BadRequest();
+            var dto = request.ToDto(id);
             await _tarifaService.UpdateAsync(dto);
             return NoContent();
         }

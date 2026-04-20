@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Servicio.Hotel.API.Controllers.Internal.Pagos
 {
     [ApiController]
-    [Route("api/v1/internal/[controller]")]
+    [Route("api/v1/internal/pagos")]
     public class PagoController : ControllerBase
     {
         private readonly IPagoService _pagoService;
@@ -33,16 +34,17 @@ namespace Servicio.Hotel.API.Controllers.Internal.Pagos
         }
 
         [HttpPost]
-        public async Task<ActionResult<PagoDTO>> Create([FromBody] PagoDTO dto)
+        public async Task<ActionResult<PagoDTO>> Create([FromBody] PagoCreateRequest request)
         {
+            var dto = request.ToDto();
             var result = await _pagoService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.IdPago }, result);
         }
 
         [HttpPatch("{id}/estado")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] string nuevoEstado)
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] PagoEstadoRequest request)
         {
-            await _pagoService.UpdateEstadoAsync(id, nuevoEstado, "Sistema");
+            await _pagoService.UpdateEstadoAsync(id, request.NuevoEstado, "Sistema");
             return NoContent();
         }
     }

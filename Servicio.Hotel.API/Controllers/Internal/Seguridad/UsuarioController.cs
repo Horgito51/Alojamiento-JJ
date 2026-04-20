@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Seguridad;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
     [ApiController]
     [Authorize]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/internal/[controller]")]
+    [Route("api/v{version:apiVersion}/internal/usuarios")]
     public class UsuarioController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;
@@ -36,24 +37,25 @@ namespace Servicio.Hotel.API.Controllers.Internal.Seguridad
         }
 
         [HttpPost]
-        public async Task<ActionResult<UsuarioDTO>> Create([FromBody] UsuarioDTO usuarioDto)
+        public async Task<ActionResult<UsuarioDTO>> Create([FromBody] UsuarioCreateRequest request)
         {
+            var usuarioDto = request.ToDto();
             var nuevoUsuario = await _usuarioService.CreateAsync(usuarioDto);
             return CreatedAtAction(nameof(GetById), new { id = nuevoUsuario.IdUsuario }, nuevoUsuario);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UsuarioDTO usuarioDto)
+        public async Task<IActionResult> Update(int id, [FromBody] UsuarioUpdateRequest request)
         {
-            if (id != usuarioDto.IdUsuario) return BadRequest();
+            var usuarioDto = request.ToDto(id);
             await _usuarioService.UpdateAsync(usuarioDto);
             return NoContent();
         }
 
         [HttpPatch("{id}/inhabilitar")]
-        public async Task<IActionResult> Inhabilitar(int id, [FromBody] string motivo)
+        public async Task<IActionResult> Inhabilitar(int id, [FromBody] InhabilitarRequest request)
         {
-            await _usuarioService.InhabilitarAsync(id, motivo, "Sistema");
+            await _usuarioService.InhabilitarAsync(id, request.Motivo, "Sistema");
             return NoContent();
         }
 

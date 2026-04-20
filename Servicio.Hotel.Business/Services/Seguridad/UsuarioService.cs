@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -64,8 +65,16 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             var existing = await _usuarioDataService.GetByIdAsync(usuarioDto.IdUsuario, ct);
             if (existing == null)
                 throw new NotFoundException("USR-005", $"No se encontró el usuario con ID {usuarioDto.IdUsuario}.");
-            var dataModel = usuarioDto.ToDataModel();
-            await _usuarioDataService.UpdateAsync(dataModel, ct);
+            
+            // Solo actualizamos los campos permitidos en la actualización
+            existing.Correo = usuarioDto.Correo;
+            existing.Nombres = usuarioDto.Nombres;
+            existing.Apellidos = usuarioDto.Apellidos;
+            existing.EstadoUsuario = usuarioDto.EstadoUsuario;
+            existing.Activo = usuarioDto.Activo;
+            existing.Roles = usuarioDto.Roles?.Select(r => r.ToDataModel()).ToList();
+            
+            await _usuarioDataService.UpdateAsync(existing, ct);
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)

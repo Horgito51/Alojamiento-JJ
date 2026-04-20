@@ -57,8 +57,17 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             var existing = await _habitacionDataService.GetByIdAsync(habitacionDto.IdHabitacion, ct);
             if (existing == null)
                 throw new NotFoundException("HAB-003", $"No se encontró la habitación con ID {habitacionDto.IdHabitacion}.");
-            var dataModel = habitacionDto.ToDataModel();
-            await _habitacionDataService.UpdateAsync(dataModel, ct);
+            
+            // Solo actualizamos los campos permitidos en la actualización
+            existing.IdTipoHabitacion = habitacionDto.IdTipoHabitacion;
+            existing.NumeroHabitacion = habitacionDto.NumeroHabitacion;
+            existing.Piso = habitacionDto.Piso;
+            existing.CapacidadHabitacion = habitacionDto.CapacidadHabitacion;
+            existing.PrecioBase = habitacionDto.PrecioBase;
+            existing.DescripcionHabitacion = habitacionDto.DescripcionHabitacion;
+            existing.EstadoHabitacion = habitacionDto.EstadoHabitacion;
+            
+            await _habitacionDataService.UpdateAsync(existing, ct);
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)
