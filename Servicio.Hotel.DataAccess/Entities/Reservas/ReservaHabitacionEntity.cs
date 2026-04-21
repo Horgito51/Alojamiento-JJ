@@ -18,18 +18,15 @@ namespace Servicio.Hotel.DataAccess.Entities.Reservas
         public decimal ValorIvaLinea { get; set; }
         public decimal DescuentoLinea { get; set; }
         public decimal TotalLinea { get; set; }
-        public string EstadoDetalle { get; set; }  // PEN, CON, CAN, FIN, EMI
+        public string EstadoDetalle { get; set; }
         public DateTime FechaRegistroUtc { get; set; }
         public string CreadoPorUsuario { get; set; }
-        public string ModificadoPorUsuario { get; set; }
+        public string? ModificadoPorUsuario { get; set; }
         public DateTime? FechaModificacionUtc { get; set; }
-        public string ModificacionIp { get; set; }
+        public string? ModificacionIp { get; set; }
         public string ServicioOrigen { get; set; }
         public byte[] RowVersion { get; set; }
 
-        // Navigation properties
         public ReservaEntity Reserva { get; set; }
-        // public HabitacionEntity Habitacion { get; set; } // desde Alojamiento
-        // public TarifaEntity Tarifa { get; set; }
     }
 }

@@ -30,11 +30,11 @@ namespace Servicio.Hotel.DataAccess.Configurations.Alojamiento
             builder.Property(e => e.FechaInhabilitacionUtc).HasColumnName("fecha_inhabilitacion_utc");
             builder.Property(e => e.MotivoInhabilitacion).HasColumnName("motivo_inhabilitacion").HasMaxLength(250);
             builder.Property(e => e.FechaRegistroUtc).HasColumnName("fecha_registro_utc");
-            builder.Property(e => e.CreadoPorUsuario).HasColumnName("creado_por_usuario").HasMaxLength(100);
+            builder.Property(e => e.CreadoPorUsuario).HasColumnName("creado_por_usuario").HasMaxLength(100).HasDefaultValue("Sistema");
             builder.Property(e => e.ModificadoPorUsuario).HasColumnName("modificado_por_usuario").HasMaxLength(100);
             builder.Property(e => e.FechaModificacionUtc).HasColumnName("fecha_modificacion_utc");
             builder.Property(e => e.ModificacionIp).HasColumnName("modificacion_ip").HasMaxLength(45);
-            builder.Property(e => e.ServicioOrigen).HasColumnName("servicio_origen").HasMaxLength(50);
+            builder.Property(e => e.ServicioOrigen).HasColumnName("servicio_origen").HasMaxLength(50).HasDefaultValue("habitaciones-service");
             builder.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
 
             builder.HasIndex(e => e.CatalogoGuid).IsUnique();

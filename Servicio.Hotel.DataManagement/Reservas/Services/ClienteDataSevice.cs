@@ -52,6 +52,10 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
         public async Task<ClienteDataModel> AddAsync(ClienteDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.ClienteGuid == Guid.Empty) entity.ClienteGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "clientes-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _clienteRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

@@ -70,6 +70,10 @@ namespace Servicio.Hotel.DataManagement.Hospedaje.Services
         public async Task<EstadiaDataModel> AddAsync(EstadiaDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.EstadiaGuid == Guid.Empty) entity.EstadiaGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "hospedaje-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _estadiaRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();
@@ -99,6 +103,10 @@ namespace Servicio.Hotel.DataManagement.Hospedaje.Services
         {
             var entity = cargo.ToEntity();
             entity.IdEstadia = idEstadia;
+            if (entity.CargoGuid == Guid.Empty) entity.CargoGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "hospedaje-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _cargoEstadiaRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

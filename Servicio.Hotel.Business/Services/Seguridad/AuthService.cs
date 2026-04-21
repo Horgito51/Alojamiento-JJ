@@ -36,21 +36,19 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             if (credenciales == null)
                 throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
 
-            // Simulación de autenticación (en producción se compara hash)
-            // if (!VerifyPassword(loginRequest.Password, credenciales.PasswordHash)) throw ...
-
             var usuario = await _usuarioDataService.GetByUsernameAsync(loginRequest.Username, ct);
             if (usuario == null)
                 throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
 
             var roles = usuario.Roles?.Select(r => r.NombreRol).ToList() ?? new List<string>();
             var token = GenerarTokenJWT(usuario, roles);
+            var expirationMinutes = int.TryParse(_configuration["Jwt:ExpirationMinutes"], out var mins) ? mins : 60;
 
             return new LoginResponseDTO
             {
                 AccessToken = token,
-                RefreshToken = Guid.NewGuid().ToString(), // Simulación de refresh token
-                ExpiresIn = int.Parse(_configuration["Jwt:ExpirationMinutes"] ?? "60") * 60,
+                RefreshToken = Guid.NewGuid().ToString(),
+                ExpiresIn = expirationMinutes * 60,
                 UsuarioGuid = usuario.UsuarioGuid,
                 Username = usuario.Username,
                 Correo = usuario.Correo,
@@ -61,14 +59,14 @@ namespace Servicio.Hotel.Business.Services.Seguridad
 
         private string GenerarTokenJWT(UsuarioDataModel usuario, List<string> roles)
         {
-            var jwtSecret = _configuration["Jwt:Secret"] ?? "MiClaveSuperSecretaParaJWT1234567890!";
-            var expirationMinutesStr = _configuration["Jwt:ExpirationMinutes"];
-            var expirationMinutes = string.IsNullOrEmpty(expirationMinutesStr) ? 60 : int.Parse(expirationMinutesStr);
-            var issuer = _configuration["Jwt:Issuer"] ?? "Microservicio.Clientes";
+            // Leer exactamente los mismos valores que usa AuthenticationExtensions
+            var secret   = _configuration["Jwt:Secret"]   ?? "MiClaveSuperSecretaParaJWT1234567890!";
+            var issuer   = _configuration["Jwt:Issuer"]   ?? "Microservicio.Clientes.API";
             var audience = _configuration["Jwt:Audience"] ?? "Microservicio.Clientes.API";
+            var expirationMinutes = int.TryParse(_configuration["Jwt:ExpirationMinutes"], out var mins) ? mins : 60;
 
+            var key = Encoding.ASCII.GetBytes(secret);
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtSecret);
 
             var claims = new List<Claim>
             {
@@ -80,9 +78,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             };
 
             foreach (var role in roles)
-            {
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -101,18 +97,12 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         }
 
         public Task LogoutAsync(string refreshToken, CancellationToken ct = default)
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
 
         public Task<LoginResponseDTO> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
-        {
-            throw new System.NotImplementedException();
-        }
+            => throw new NotImplementedException();
 
         public Task<bool> ValidateTokenAsync(string token, CancellationToken ct = default)
-        {
-            return Task.FromResult(true);
-        }
+            => Task.FromResult(true);
     }
 }

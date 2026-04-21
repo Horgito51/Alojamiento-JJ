@@ -52,6 +52,10 @@ namespace Servicio.Hotel.DataManagement.Facturacion.Services
         public async Task<PagoDataModel> AddAsync(PagoDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.PagoGuid == Guid.Empty) entity.PagoGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "pagos-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _pagoRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

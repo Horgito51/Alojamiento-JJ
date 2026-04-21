@@ -32,13 +32,9 @@ namespace Servicio.Hotel.Business.Validators.Alojamiento
                 errors["PrecioBase"] = new[] { "El precio base debe ser mayor a cero." };
 
             var estadosValidos = new[] { "DIS", "OCU", "MNT", "FDS", "INA" };
-            if (!estadosValidos.Contains(habitacion.EstadoHabitacion))
+            if (!string.IsNullOrWhiteSpace(habitacion.EstadoHabitacion) &&
+                !estadosValidos.Contains(habitacion.EstadoHabitacion))
                 errors["EstadoHabitacion"] = new[] { $"Estado inválido. Valores permitidos: {string.Join(", ", estadosValidos)}." };
-
-            if (string.IsNullOrWhiteSpace(habitacion.CreadoPorUsuario))
-                errors["CreadoPorUsuario"] = new[] { "El creador del registro es obligatorio." };
-            else if (habitacion.CreadoPorUsuario.Length > 100)
-                errors["CreadoPorUsuario"] = new[] { "El creador no puede exceder 100 caracteres." };
 
             if (errors.Count > 0)
                 throw new ValidationException("HAB-002", errors);

@@ -78,6 +78,23 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
         public async Task<ReservaDataModel> AddAsync(ReservaDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.GuidReserva == Guid.Empty) entity.GuidReserva = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "reservas-service";
+            if (string.IsNullOrWhiteSpace(entity.CodigoReserva))
+                entity.CodigoReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
+            entity.FechaReservaUtc = DateTime.UtcNow;
+            if (entity.ReservasHabitaciones != null)
+            {
+                foreach (var rh in entity.ReservasHabitaciones)
+                {
+                    if (rh.ReservaHabitacionGuid == Guid.Empty) rh.ReservaHabitacionGuid = Guid.NewGuid();
+                    if (string.IsNullOrWhiteSpace(rh.CreadoPorUsuario)) rh.CreadoPorUsuario = "Sistema";
+                    if (string.IsNullOrWhiteSpace(rh.ServicioOrigen)) rh.ServicioOrigen = "reservas-service";
+                    rh.FechaRegistroUtc = DateTime.UtcNow;
+                }
+            }
             var added = await _reservaRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

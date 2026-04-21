@@ -34,11 +34,11 @@ namespace Servicio.Hotel.DataAccess.Configurations.Valoraciones
             builder.Property(e => e.ModeradaPorUsuario).HasColumnName("moderada_por_usuario").HasMaxLength(100);
             builder.Property(e => e.MotivoModeracion).HasColumnName("motivo_moderacion").HasMaxLength(250);
             builder.Property(e => e.FechaRegistroUtc).HasColumnName("fecha_registro_utc");
-            builder.Property(e => e.CreadoPorUsuario).HasColumnName("creado_por_usuario").HasMaxLength(100);
+            builder.Property(e => e.CreadoPorUsuario).HasColumnName("creado_por_usuario").HasMaxLength(100).HasDefaultValue("Sistema");
             builder.Property(e => e.ModificadoPorUsuario).HasColumnName("modificado_por_usuario").HasMaxLength(100);
             builder.Property(e => e.FechaModificacionUtc).HasColumnName("fecha_modificacion_utc");
             builder.Property(e => e.ModificacionIp).HasColumnName("modificacion_ip").HasMaxLength(45);
-            builder.Property(e => e.ServicioOrigen).HasColumnName("servicio_origen").HasMaxLength(50);
+            builder.Property(e => e.ServicioOrigen).HasColumnName("servicio_origen").HasMaxLength(50).HasDefaultValue("reputacion-service");
             builder.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
 
             builder.HasIndex(e => e.ValoracionGuid).IsUnique();

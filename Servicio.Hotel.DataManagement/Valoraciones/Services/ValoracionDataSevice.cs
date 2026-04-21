@@ -72,6 +72,10 @@ namespace Servicio.Hotel.DataManagement.Valoraciones.Services
         public async Task<ValoracionDataModel> AddAsync(ValoracionDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.ValoracionGuid == Guid.Empty) entity.ValoracionGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "reputacion-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _valoracionRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

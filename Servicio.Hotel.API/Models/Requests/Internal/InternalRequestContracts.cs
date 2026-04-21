@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.DTOs.Hospedaje;
@@ -93,7 +94,23 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string EstadoReserva { get; set; } = "PEN";
         public string? Observaciones { get; set; }
         public bool EsWalkin { get; set; }
-        public List<ReservaHabitacionDTO> Habitaciones { get; set; } = new();
+        public List<ReservaHabitacionCreateRequest> Habitaciones { get; set; } = new();
+    }
+
+    public class ReservaHabitacionCreateRequest
+    {
+        public int IdHabitacion { get; set; }
+        public int? IdTarifa { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public int NumAdultos { get; set; } = 1;
+        public int NumNinos { get; set; } = 0;
+        public decimal PrecioNocheAplicado { get; set; }
+        public decimal SubtotalLinea { get; set; }
+        public decimal ValorIvaLinea { get; set; }
+        public decimal DescuentoLinea { get; set; } = 0;
+        public decimal TotalLinea { get; set; }
+        public string EstadoDetalle { get; set; } = "PEN";
     }
 
     public class ReservaUpdateRequest
@@ -389,7 +406,21 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 EstadoReserva = request.EstadoReserva,
                 Observaciones = request.Observaciones ?? string.Empty,
                 EsWalkin = request.EsWalkin,
-                Habitaciones = request.Habitaciones
+                Habitaciones = request.Habitaciones.Select(h => new Servicio.Hotel.Business.DTOs.Reservas.ReservaHabitacionDTO
+                {
+                    IdHabitacion = h.IdHabitacion,
+                    IdTarifa = h.IdTarifa,
+                    FechaInicio = h.FechaInicio,
+                    FechaFin = h.FechaFin,
+                    NumAdultos = h.NumAdultos,
+                    NumNinos = h.NumNinos,
+                    PrecioNocheAplicado = h.PrecioNocheAplicado,
+                    SubtotalLinea = h.SubtotalLinea,
+                    ValorIvaLinea = h.ValorIvaLinea,
+                    DescuentoLinea = h.DescuentoLinea,
+                    TotalLinea = h.TotalLinea,
+                    EstadoDetalle = h.EstadoDetalle
+                }).ToList()
             };
 
         public static Servicio.Hotel.Business.DTOs.Reservas.ReservaUpdateDTO ToUpdateDto(this ReservaUpdateRequest request, int id)

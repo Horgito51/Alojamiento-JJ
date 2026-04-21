@@ -53,6 +53,10 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         public async Task<TarifaDataModel> AddAsync(TarifaDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.TarifaGuid == Guid.Empty) entity.TarifaGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "tarifas-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _tarifaRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

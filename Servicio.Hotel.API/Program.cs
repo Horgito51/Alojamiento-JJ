@@ -26,6 +26,9 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' es obligatoria.");
 }
 
+// Registrar JwtSettings como IOptions para inyección tipada
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
 // 2. Registrar servicios de capa de datos (DbContext, repositorios)
 builder.Services.AddDataAccessServices(connectionString);
 

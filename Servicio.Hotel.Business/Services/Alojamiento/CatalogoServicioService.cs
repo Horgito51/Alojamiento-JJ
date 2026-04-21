@@ -27,6 +27,12 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
 
         public async Task<CatalogoServicioDTO> CreateAsync(CatalogoServicioCreateDTO dto, CancellationToken ct = default)
         {
+            var tiposValidos = new[] { "AME", "SRV" };
+            if (string.IsNullOrWhiteSpace(dto.TipoCatalogo) || !tiposValidos.Contains(dto.TipoCatalogo.ToUpper()))
+                throw new ValidationException("CAT-002", "El tipo de catálogo debe ser 'AME' (amenidad) o 'SRV' (servicio).");
+
+            dto.TipoCatalogo = dto.TipoCatalogo.ToUpper();
+
             var created = await _dataService.AddAsync(dto.ToDataModel()!, ct);
             return created.ToDto()!;
         }
@@ -34,6 +40,14 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         public async Task UpdateAsync(CatalogoServicioUpdateDTO dto, CancellationToken ct = default)
         {
             _ = await GetByIdAsync(dto.IdCatalogo, ct);
+
+            var tiposValidos = new[] { "AME", "SRV" };
+            if (!string.IsNullOrWhiteSpace(dto.TipoCatalogo) && !tiposValidos.Contains(dto.TipoCatalogo.ToUpper()))
+                throw new ValidationException("CAT-003", "El tipo de catálogo debe ser 'AME' (amenidad) o 'SRV' (servicio).");
+
+            if (!string.IsNullOrWhiteSpace(dto.TipoCatalogo))
+                dto.TipoCatalogo = dto.TipoCatalogo.ToUpper();
+
             await _dataService.UpdateAsync(dto.ToDataModel()!, ct);
         }
 

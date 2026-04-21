@@ -7,8 +7,8 @@ namespace Servicio.Hotel.DataAccess.Entities.Facturacion
         public int IdFacturaDetalle { get; set; }
         public Guid FacturaDetalleGuid { get; set; }
         public int IdFactura { get; set; }
-        public string TipoItem { get; set; }  // ALOJAMIENTO, SERVICIO, DESCUENTO, AJUSTE
-        public string ReferenciaTipo { get; set; }
+        public string TipoItem { get; set; }
+        public string? ReferenciaTipo { get; set; }
         public int? ReferenciaId { get; set; }
         public string DescripcionItem { get; set; }
         public int Cantidad { get; set; }
@@ -21,7 +21,6 @@ namespace Servicio.Hotel.DataAccess.Entities.Facturacion
         public string CreadoPorUsuario { get; set; }
         public byte[] RowVersion { get; set; }
 
-        // Navigation property
         public FacturaEntity Factura { get; set; }
     }
 }

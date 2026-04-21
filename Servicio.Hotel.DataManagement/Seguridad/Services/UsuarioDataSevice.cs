@@ -52,6 +52,9 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
         public async Task<UsuarioDataModel> AddAsync(UsuarioDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.UsuarioGuid == Guid.Empty) entity.UsuarioGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _usuarioRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

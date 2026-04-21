@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Servicio.Hotel.API.Models.Settings;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Servicio.Hotel.API.Extensions
 {
@@ -18,7 +20,7 @@ namespace Servicio.Hotel.API.Extensions
             })
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false; // En producción debe ser true
+                options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -30,6 +32,29 @@ namespace Servicio.Hotel.API.Extensions
                     ValidAudience = jwtSettings.Audience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
+                };
+
+                // Log detallado del error de autenticación en desarrollo
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        var loggerFactory = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>();
+                        var logger = loggerFactory.CreateLogger("JwtBearer");
+                        logger.LogError("JWT auth failed: {Error}", context.Exception.Message);
+                        context.Response.Headers["X-Auth-Error"] = context.Exception.Message;
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        var loggerFactory = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>();
+                        var logger = loggerFactory.CreateLogger("JwtBearer");
+                        logger.LogWarning("JWT challenge: {Error} | {ErrorDescription}",
+                            context.Error, context.ErrorDescription);
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

@@ -32,9 +32,14 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
 
         public async Task<SucursalDataModel> AddAsync(SucursalDataModel model, CancellationToken ct = default)
         {
-            var entity = await _repository.AddAsync(model.ToEntity()!, ct);
+            var entity = model.ToEntity()!;
+            if (entity.SucursalGuid == Guid.Empty) entity.SucursalGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "sucursales-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
+            var added = await _repository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
-            return entity.ToModel()!;
+            return added.ToModel()!;
         }
 
         public async Task UpdateAsync(SucursalDataModel model, CancellationToken ct = default)

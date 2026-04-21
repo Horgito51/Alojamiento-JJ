@@ -11,10 +11,10 @@ namespace Servicio.Hotel.DataAccess.Entities.Seguridad
         public string Username { get; set; }
         public string Correo { get; set; }
         public string Nombres { get; set; }
-        public string Apellidos { get; set; }
+        public string? Apellidos { get; set; }
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
-        public string EstadoUsuario { get; set; }  // ACT, INA, BLO
+        public string EstadoUsuario { get; set; }
         public bool EsEliminado { get; set; }
         public bool Activo { get; set; }
         public DateTime? FechaInhabilitacionUtc { get; set; }
@@ -26,8 +26,6 @@ namespace Servicio.Hotel.DataAccess.Entities.Seguridad
         public string? ModificacionIp { get; set; }
         public byte[] RowVersion { get; set; }
 
-        // Navigation properties
         public ICollection<UsuarioRolEntity> UsuariosRoles { get; set; }
-        // public ClienteEntity Cliente { get; set; } // cuando exista la entidad Cliente
     }
 }

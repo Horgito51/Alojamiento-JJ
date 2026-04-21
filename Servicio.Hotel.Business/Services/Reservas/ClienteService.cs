@@ -50,6 +50,11 @@ namespace Servicio.Hotel.Business.Services.Reservas
 
         public async Task<ClienteDTO> CreateAsync(ClienteCreateDTO clienteCreateDto, CancellationToken ct = default)
         {
+            // Verificar correo duplicado antes de llegar a la BD
+            var existente = await _clienteDataService.GetByCorreoAsync(clienteCreateDto.Correo, ct);
+            if (existente != null)
+                throw new ValidationException("CLI-010", $"Ya existe un cliente registrado con el correo '{clienteCreateDto.Correo}'.");
+
             var dataModel = clienteCreateDto.ToDataModel();
             var created = await _clienteDataService.AddAsync(dataModel, ct);
             return created.ToDto();

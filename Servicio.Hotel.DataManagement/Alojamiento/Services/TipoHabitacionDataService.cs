@@ -53,6 +53,10 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         public async Task<TipoHabitacionDataModel> AddAsync(TipoHabitacionDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.TipoHabitacionGuid == Guid.Empty) entity.TipoHabitacionGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "habitaciones-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _tipoHabitacionRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

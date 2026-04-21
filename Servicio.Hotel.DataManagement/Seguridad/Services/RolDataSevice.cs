@@ -52,6 +52,9 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
         public async Task<RolDataModel> AddAsync(RolDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.RolGuid == Guid.Empty) entity.RolGuid = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _rolRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

@@ -19,26 +19,24 @@ namespace Servicio.Hotel.DataAccess.Entities.Reservas
         public decimal DescuentoAplicado { get; set; }
         public decimal SaldoPendiente { get; set; }
         public string OrigenCanalReserva { get; set; }
-        public string EstadoReserva { get; set; }  // PEN, CON, CAN, EXP, FIN, EMI
+        public string EstadoReserva { get; set; }
         public DateTime? FechaConfirmacionUtc { get; set; }
         public DateTime? FechaCancelacionUtc { get; set; }
-        public string MotivoCancelacion { get; set; }
-        public string Observaciones { get; set; }
+        public string? MotivoCancelacion { get; set; }
+        public string? Observaciones { get; set; }
         public bool EsWalkin { get; set; }
         public bool EsEliminado { get; set; }
         public string CreadoPorUsuario { get; set; }
         public DateTime FechaRegistroUtc { get; set; }
-        public string ModificadoPorUsuario { get; set; }
+        public string? ModificadoPorUsuario { get; set; }
         public DateTime? FechaModificacionUtc { get; set; }
-        public string ModificacionIp { get; set; }
+        public string? ModificacionIp { get; set; }
         public string ServicioOrigen { get; set; }
         public DateTime? FechaInhabilitacionUtc { get; set; }
-        public string MotivoInhabilitacion { get; set; }
+        public string? MotivoInhabilitacion { get; set; }
         public byte[] RowVersion { get; set; }
 
-        // Navigation properties
         public ClienteEntity Cliente { get; set; }
-        // public SucursalEntity Sucursal { get; set; } // desde Alojamiento
         public ICollection<ReservaHabitacionEntity> ReservasHabitaciones { get; set; }
     }
 }

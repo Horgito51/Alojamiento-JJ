@@ -70,6 +70,10 @@ namespace Servicio.Hotel.DataManagement.Facturacion.Services
         public async Task<FacturaDataModel> AddAsync(FacturaDataModel model, CancellationToken ct = default)
         {
             var entity = model.ToEntity();
+            if (entity.GuidFactura == Guid.Empty) entity.GuidFactura = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "facturacion-service";
+            entity.FechaRegistroUtc = DateTime.UtcNow;
             var added = await _facturaRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();

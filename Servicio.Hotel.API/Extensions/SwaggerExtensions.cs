@@ -19,15 +19,15 @@ namespace Servicio.Hotel.API.Extensions
                     Description = "API para gestión de hoteles, reservas y facturación"
                 });
 
-                // 🔐 JWT en Swagger
+                // 🔐 JWT en Swagger - esquema Http estándar
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Ingrese 'Bearer' [espacio] y luego su token JWT.\nEjemplo: Bearer abc123"
+                    Description = "Ingrese solo el token JWT (sin 'Bearer ').\nSwagger agrega el prefijo automáticamente."
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
