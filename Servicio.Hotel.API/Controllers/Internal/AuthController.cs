@@ -1,8 +1,10 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Servicio.Hotel.API.Models.Requests.Internal;
 using Servicio.Hotel.Business.DTOs.Seguridad;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Servicio.Hotel.API.Controllers.Internal
@@ -37,6 +39,19 @@ namespace Servicio.Hotel.API.Controllers.Internal
         public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
         {
             await _authService.LogoutAsync(request.RefreshToken);
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpPost("cambiar-password")]
+        public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordRequest request)
+        {
+            var idValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(idValue, out var idUsuario))
+                throw new UnauthorizedAccessException();
+
+            var usuario = User.Identity?.Name ?? "Sistema";
+            await _authService.CambiarPasswordAsync(idUsuario, request.PasswordActual, request.PasswordNuevo, usuario);
             return NoContent();
         }
     }

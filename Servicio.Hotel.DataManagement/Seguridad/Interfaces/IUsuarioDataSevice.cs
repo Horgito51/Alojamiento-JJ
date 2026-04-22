@@ -17,6 +17,7 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Interfaces
 
         Task<UsuarioDataModel?> GetByUsernameAsync(string username, CancellationToken ct = default);
         Task<UsuarioCredencialesDataModel?> GetCredentialsByUsernameAsync(string username, CancellationToken ct = default);
+        Task<UsuarioCredencialesDataModel?> GetCredentialsByIdAsync(int id, CancellationToken ct = default);
         Task<UsuarioDataModel?> GetByCorreoAsync(string correo, CancellationToken ct = default);
         Task<UsuarioDataModel?> AuthenticateAsync(string username, string passwordHash, CancellationToken ct = default);
         Task InhabilitarAsync(int id, string motivo, string usuario, CancellationToken ct = default);

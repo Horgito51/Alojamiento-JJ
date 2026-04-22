@@ -15,6 +15,7 @@ namespace Servicio.Hotel.DataAccess.Configurations.Alojamiento
             builder.Property(e => e.TipoHabitacionGuid).HasColumnName("tipo_habitacion_guid");
             builder.Property(e => e.CodigoTipoHabitacion).HasColumnName("codigo_tipo_habitacion").HasMaxLength(30);
             builder.Property(e => e.NombreTipoHabitacion).HasColumnName("nombre_tipo_habitacion").HasMaxLength(120);
+            builder.Property(e => e.Slug).HasColumnName("slug").HasMaxLength(160);
             builder.Property(e => e.Descripcion).HasColumnName("descripcion");
             builder.Property(e => e.CapacidadAdultos).HasColumnName("capacidad_adultos");
             builder.Property(e => e.CapacidadNinos).HasColumnName("capacidad_ninos");
@@ -38,6 +39,7 @@ namespace Servicio.Hotel.DataAccess.Configurations.Alojamiento
             builder.HasIndex(e => e.TipoHabitacionGuid).IsUnique();
             builder.HasIndex(e => e.CodigoTipoHabitacion).IsUnique();
             builder.HasIndex(e => e.NombreTipoHabitacion).IsUnique();
+            builder.HasIndex(e => e.Slug).IsUnique();
 
             builder.HasCheckConstraint("CHK_TIPO_HABITACION_ESTADO", "[estado_tipo_habitacion] IN ('ACT','INA')");
             builder.HasCheckConstraint("CHK_TIPO_HABITACION_ADULTOS", "[capacidad_adultos] > 0");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,7 +63,20 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
 
         public async Task UpdateAsync(ClienteDataModel model, CancellationToken ct = default)
         {
-            var entity = model.ToEntity();
+            var entity = await _clienteRepository.GetByIdAsync(model.IdCliente, ct);
+            if (entity == null) return;
+
+            // Actualizamos los campos que pueden cambiar
+            entity.Nombres = model.Nombres;
+            entity.Apellidos = model.Apellidos;
+            entity.RazonSocial = model.RazonSocial;
+            entity.Correo = model.Correo;
+            entity.Telefono = model.Telefono;
+            entity.Direccion = model.Direccion;
+            entity.Estado = model.Estado;
+            entity.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";
+            entity.FechaModificacionUtc = DateTime.UtcNow;
+
             await _clienteRepository.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }

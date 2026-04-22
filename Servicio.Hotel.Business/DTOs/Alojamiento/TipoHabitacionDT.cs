@@ -7,6 +7,7 @@ namespace Servicio.Hotel.Business.DTOs.Alojamiento
     {
         public int IdTipoHabitacion { get; set; }
         public Guid TipoHabitacionGuid { get; set; }
+        public string Slug { get; set; } = string.Empty;
         public string CodigoTipoHabitacion { get; set; }
         public string NombreTipoHabitacion { get; set; }
         public string Descripcion { get; set; }

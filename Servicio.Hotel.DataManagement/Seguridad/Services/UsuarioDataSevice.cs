@@ -62,7 +62,22 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
 
         public async Task UpdateAsync(UsuarioDataModel model, CancellationToken ct = default)
         {
-            var entity = model.ToEntity();
+            var entity = await _usuarioRepository.GetByIdAsync(model.IdUsuario, ct);
+            if (entity == null) return;
+
+            // Actualizamos campos básicos
+            entity.Correo = model.Correo;
+            entity.Nombres = model.Nombres;
+            entity.Apellidos = model.Apellidos;
+            entity.EstadoUsuario = model.EstadoUsuario;
+            entity.Activo = model.Activo;
+            entity.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";
+            entity.FechaModificacionUtc = DateTime.UtcNow;
+
+            // Para los roles, se debería manejar a través de una tabla intermedia o un método especializado
+            // Por ahora, para corregir el error de compilación, omitimos la asignación directa
+            // ya que la entidad usa 'UsuariosRoles' (colección de UsuarioRolEntity) y no 'Roles'.
+
             await _usuarioRepository.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }
@@ -82,6 +97,12 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
         public async Task<UsuarioCredencialesDataModel?> GetCredentialsByUsernameAsync(string username, CancellationToken ct = default)
         {
             var entity = await _usuarioRepository.GetByUsernameAsync(username, ct);
+            return entity?.ToCredentialsModel();
+        }
+
+        public async Task<UsuarioCredencialesDataModel?> GetCredentialsByIdAsync(int id, CancellationToken ct = default)
+        {
+            var entity = await _usuarioRepository.GetByIdAsync(id, ct);
             return entity?.ToCredentialsModel();
         }
 

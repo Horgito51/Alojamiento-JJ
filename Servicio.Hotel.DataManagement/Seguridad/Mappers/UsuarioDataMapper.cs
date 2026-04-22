@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using Servicio.Hotel.DataAccess.Entities.Seguridad;
 using Servicio.Hotel.DataManagement.Seguridad.Models;
@@ -58,7 +59,16 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Mappers
                 ModificadoPorUsuario = model.ModificadoPorUsuario,
                 FechaModificacionUtc = model.FechaModificacionUtc,
                 ModificacionIp = model.ModificacionIp,
-                RowVersion = model.RowVersion
+                RowVersion = model.RowVersion,
+                UsuariosRoles = model.Roles?.Select(r => new UsuarioRolEntity
+                {
+                    IdRol = r.IdRol,
+                    EstadoUsuarioRol = "ACT",
+                    EsEliminado = false,
+                    Activo = true,
+                    FechaRegistroUtc = DateTime.UtcNow,
+                    CreadoPorUsuario = string.IsNullOrWhiteSpace(model.CreadoPorUsuario) ? "Sistema" : model.CreadoPorUsuario
+                }).ToList()
                 // Nota: La relación UsuariosRoles se debe manejar aparte para evitar ciclos
             };
         }

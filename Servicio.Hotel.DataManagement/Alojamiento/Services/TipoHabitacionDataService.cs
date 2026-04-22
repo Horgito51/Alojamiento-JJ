@@ -35,6 +35,12 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
             return entity?.ToModel();
         }
 
+        public async Task<TipoHabitacionDataModel> GetBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            var entity = await _tipoHabitacionRepository.GetBySlugAsync(slug, ct);
+            return entity?.ToModel();
+        }
+
         public async Task<DataPagedResult<TipoHabitacionDataModel>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default)
         {
             var entities = await _tipoHabitacionRepository.GetAllAsync(ct);
@@ -64,8 +70,24 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
 
         public async Task UpdateAsync(TipoHabitacionDataModel model, CancellationToken ct = default)
         {
-            var entity = model.ToEntity();
-            await _tipoHabitacionRepository.UpdateAsync(entity, ct);
+            var existing = await _tipoHabitacionRepository.GetByIdAsync(model.IdTipoHabitacion, ct);
+            if (existing == null) return;
+
+            existing.CodigoTipoHabitacion = model.CodigoTipoHabitacion;
+            existing.NombreTipoHabitacion = model.NombreTipoHabitacion;
+            existing.Descripcion = model.Descripcion;
+            existing.CapacidadAdultos = model.CapacidadAdultos;
+            existing.CapacidadNinos = model.CapacidadNinos;
+            existing.CapacidadTotal = model.CapacidadTotal;
+            existing.TipoCama = model.TipoCama;
+            existing.AreaM2 = model.AreaM2;
+            existing.PermiteEventos = model.PermiteEventos;
+            existing.PermiteReservaPublica = model.PermiteReservaPublica;
+            existing.EstadoTipoHabitacion = model.EstadoTipoHabitacion;
+            existing.ModificadoPorUsuario = string.IsNullOrWhiteSpace(model.ModificadoPorUsuario) ? "Sistema" : model.ModificadoPorUsuario;
+            existing.FechaModificacionUtc = DateTime.UtcNow;
+
+            await _tipoHabitacionRepository.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }
 
@@ -84,6 +106,11 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         public async Task<bool> ExistsByCodigoAsync(string codigo, CancellationToken ct = default)
         {
             return await _tipoHabitacionRepository.ExistsByCodigoAsync(codigo, ct);
+        }
+
+        public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _tipoHabitacionRepository.ExistsBySlugAsync(slug, ct);
         }
     }
 }

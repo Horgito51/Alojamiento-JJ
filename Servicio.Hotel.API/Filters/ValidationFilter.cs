@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Servicio.Hotel.API.Models.Common;
+using System.Linq;
 
 namespace Servicio.Hotel.API.Filters
 {
@@ -17,14 +19,12 @@ namespace Servicio.Hotel.API.Filters
                         kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
                     );
 
-                // Respuesta estandarizada (similar a ApiErrorResponse)
-                var response = new
-                {
-                    Success = false,
-                    Message = "Uno o más errores de validación ocurrieron.",
-                    Errors = errors,
-                    StatusCode = 400
-                };
+                var response = new ApiErrorResponse(
+                    message: "Uno o más errores de validación ocurrieron.",
+                    statusCode: 400,
+                    errors: errors,
+                    traceId: context.HttpContext.TraceIdentifier
+                );
 
                 context.Result = new BadRequestObjectResult(response);
             }

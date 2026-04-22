@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,7 +62,17 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
 
         public async Task UpdateAsync(RolDataModel model, CancellationToken ct = default)
         {
-            var entity = model.ToEntity();
+            var entity = await _rolRepository.GetByIdAsync(model.IdRol, ct);
+            if (entity == null) return;
+
+            // Actualizamos los campos que pueden cambiar
+            entity.NombreRol = model.NombreRol;
+            entity.DescripcionRol = model.DescripcionRol;
+            entity.EstadoRol = model.EstadoRol;
+            entity.Activo = model.Activo;
+            entity.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";
+            entity.FechaModificacionUtc = DateTime.UtcNow;
+
             await _rolRepository.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }

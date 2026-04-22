@@ -11,6 +11,7 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Interfaces
     {
         Task<TipoHabitacionDataModel> GetByIdAsync(int id, CancellationToken ct = default);
         Task<TipoHabitacionDataModel> GetByGuidAsync(Guid guid, CancellationToken ct = default);
+        Task<TipoHabitacionDataModel> GetBySlugAsync(string slug, CancellationToken ct = default);
         Task<DataPagedResult<TipoHabitacionDataModel>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken ct = default);
         Task<TipoHabitacionDataModel> AddAsync(TipoHabitacionDataModel model, CancellationToken ct = default);
         Task UpdateAsync(TipoHabitacionDataModel model, CancellationToken ct = default);
@@ -18,5 +19,6 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Interfaces
 
         Task<IEnumerable<TipoHabitacionDataModel>> GetPublicosAsync(CancellationToken ct = default);
         Task<bool> ExistsByCodigoAsync(string codigo, CancellationToken ct = default);
+        Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default);
     }
 }

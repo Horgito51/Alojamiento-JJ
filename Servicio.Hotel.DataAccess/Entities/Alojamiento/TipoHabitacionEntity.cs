@@ -9,6 +9,7 @@ namespace Servicio.Hotel.DataAccess.Entities.Alojamiento
         public Guid TipoHabitacionGuid { get; set; }
         public string CodigoTipoHabitacion { get; set; }
         public string NombreTipoHabitacion { get; set; }
+        public string Slug { get; set; } = string.Empty;
         public string? Descripcion { get; set; }
         public int CapacidadAdultos { get; set; }
         public int CapacidadNinos { get; set; }

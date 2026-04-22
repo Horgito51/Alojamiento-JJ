@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
@@ -35,6 +36,14 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             return dataModel.ToDto();
         }
 
+        public async Task<TipoHabitacionDTO> GetBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            var dataModel = await _tipoHabitacionDataService.GetBySlugAsync(slug, ct);
+            if (dataModel == null)
+                throw new NotFoundException("TIP-002", $"No se encontró el tipo de habitación con slug '{slug}'.");
+            return dataModel.ToDto();
+        }
+
         public async Task<IEnumerable<TipoHabitacionDTO>> GetAllAsync(CancellationToken ct = default)
         {
             var pagedResult = await _tipoHabitacionDataService.GetAllPagedAsync(1, int.MaxValue, ct);
@@ -45,7 +54,20 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         {
             if (string.IsNullOrWhiteSpace(tipoCreateDto.CodigoTipoHabitacion))
                 throw new ValidationException("TIP-003", "El código del tipo de habitación es obligatorio.");
+            var baseSlug = SlugHelper.Slugify(tipoCreateDto.NombreTipoHabitacion);
+            if (string.IsNullOrWhiteSpace(baseSlug))
+                throw new ValidationException("TIP-003", "El nombre del tipo de habitación es obligatorio para generar el slug.");
+
+            var slug = baseSlug;
+            var suffix = 2;
+            while (await _tipoHabitacionDataService.ExistsBySlugAsync(slug, ct))
+            {
+                slug = $"{baseSlug}-{suffix}";
+                suffix++;
+            }
+
             var dataModel = tipoCreateDto.ToDataModel();
+            dataModel.Slug = slug;
             var created = await _tipoHabitacionDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }

@@ -68,6 +68,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             var habitacionDto = new HabitacionDTO
             {
                 IdHabitacion = habitacionUpdateDto.IdHabitacion,
+                IdSucursal = habitacionUpdateDto.IdSucursal,
                 IdTipoHabitacion = habitacionUpdateDto.IdTipoHabitacion,
                 NumeroHabitacion = habitacionUpdateDto.NumeroHabitacion,
                 Piso = habitacionUpdateDto.Piso,
@@ -77,10 +78,14 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
                 EstadoHabitacion = habitacionUpdateDto.EstadoHabitacion
             };
 
-            HabitacionValidator.Validate(habitacionDto);
             var existing = await _habitacionDataService.GetByIdAsync(habitacionUpdateDto.IdHabitacion, ct);
             if (existing == null)
                 throw new NotFoundException("HAB-003", $"No se encontró la habitación con ID {habitacionUpdateDto.IdHabitacion}.");
+
+            // Poblamos el DTO con los datos existentes que no vienen en el request para pasar la validación
+            habitacionDto.IdSucursal = existing.IdSucursal;
+
+            HabitacionValidator.Validate(habitacionDto);
 
             // Solo actualizamos los campos permitidos en la actualización
             existing.IdTipoHabitacion = habitacionDto.IdTipoHabitacion;

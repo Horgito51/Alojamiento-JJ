@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -64,7 +64,20 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
 
         public async Task UpdateAsync(HabitacionDataModel model, CancellationToken ct = default)
         {
-            var entity = model.ToEntity();
+            var entity = await _habitacionRepository.GetByIdAsync(model.IdHabitacion, ct);
+            if (entity == null) return;
+
+            // Actualizamos los campos que pueden cambiar
+            entity.IdTipoHabitacion = model.IdTipoHabitacion;
+            entity.NumeroHabitacion = model.NumeroHabitacion;
+            entity.Piso = model.Piso;
+            entity.CapacidadHabitacion = model.CapacidadHabitacion;
+            entity.PrecioBase = model.PrecioBase;
+            entity.DescripcionHabitacion = model.DescripcionHabitacion;
+            entity.EstadoHabitacion = model.EstadoHabitacion;
+            entity.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";
+            entity.FechaModificacionUtc = DateTime.UtcNow;
+
             await _habitacionRepository.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }

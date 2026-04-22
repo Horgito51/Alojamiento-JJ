@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.DataAccess.Context;
@@ -19,6 +20,9 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
         public async Task<TipoHabitacionEntity?> GetByGuidAsync(Guid guid, CancellationToken ct = default)
             => await _dbSet.FirstOrDefaultAsync(th => th.TipoHabitacionGuid == guid, ct);
 
+        public async Task<TipoHabitacionEntity?> GetBySlugAsync(string slug, CancellationToken ct = default)
+            => await _dbSet.FirstOrDefaultAsync(th => th.Slug == slug, ct);
+
         public async Task<IEnumerable<TipoHabitacionEntity>> GetAllAsync(CancellationToken ct = default)
             => await base.GetAllAsync(ct);
 
@@ -33,6 +37,9 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
 
         public async Task<bool> ExistsByCodigoAsync(string codigo, CancellationToken ct = default)
             => await _dbSet.AnyAsync(th => th.CodigoTipoHabitacion == codigo, ct);
+
+        public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
+            => await _dbSet.AnyAsync(th => th.Slug == slug, ct);
         public async Task<IEnumerable<TipoHabitacionEntity>> GetPublicosAsync(CancellationToken ct = default)
         {
             return await _dbSet.Where(th => th.PermiteReservaPublica && th.EstadoTipoHabitacion == "ACT").ToListAsync(ct);

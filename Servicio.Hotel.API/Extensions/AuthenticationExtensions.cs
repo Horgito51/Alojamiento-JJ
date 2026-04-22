@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Servicio.Hotel.API.Models.Common;
 using Servicio.Hotel.API.Models.Settings;
+using System.Text.Json;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -48,11 +50,35 @@ namespace Servicio.Hotel.API.Extensions
                     },
                     OnChallenge = context =>
                     {
+                        // Evita la respuesta por defecto sin body
+                        context.HandleResponse();
+
                         var loggerFactory = context.HttpContext.RequestServices
                             .GetRequiredService<ILoggerFactory>();
                         var logger = loggerFactory.CreateLogger("JwtBearer");
                         logger.LogWarning("JWT challenge: {Error} | {ErrorDescription}",
                             context.Error, context.ErrorDescription);
+
+                        if (!context.Response.HasStarted)
+                        {
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+
+                            var errorResponse = new ApiErrorResponse(
+                                message: "No autorizado. Se requiere token de autenticación válido.",
+                                statusCode: 401,
+                                errors: null,
+                                traceId: context.HttpContext.TraceIdentifier
+                            );
+
+                            var json = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                            });
+
+                            return context.Response.WriteAsync(json);
+                        }
+
                         return Task.CompletedTask;
                     }
                 };

@@ -15,6 +15,7 @@ namespace Servicio.Hotel.Business.Mappers.Alojamiento
             {
                 IdTipoHabitacion = model.IdTipoHabitacion,
                 TipoHabitacionGuid = model.TipoHabitacionGuid,
+                Slug = model.Slug,
                 CodigoTipoHabitacion = model.CodigoTipoHabitacion,
                 NombreTipoHabitacion = model.NombreTipoHabitacion,
                 Descripcion = model.Descripcion,
@@ -47,6 +48,7 @@ namespace Servicio.Hotel.Business.Mappers.Alojamiento
             {
                 IdTipoHabitacion = dto.IdTipoHabitacion,
                 TipoHabitacionGuid = dto.TipoHabitacionGuid,
+                Slug = dto.Slug,
                 CodigoTipoHabitacion = dto.CodigoTipoHabitacion,
                 NombreTipoHabitacion = dto.NombreTipoHabitacion,
                 Descripcion = dto.Descripcion,

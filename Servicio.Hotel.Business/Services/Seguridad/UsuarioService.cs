@@ -15,10 +15,12 @@ namespace Servicio.Hotel.Business.Services.Seguridad
     public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioDataService _usuarioDataService;
+        private readonly IRolDataService _rolDataService;
 
-        public UsuarioService(IUsuarioDataService usuarioDataService)
+        public UsuarioService(IUsuarioDataService usuarioDataService, IRolDataService rolDataService)
         {
             _usuarioDataService = usuarioDataService;
+            _rolDataService = rolDataService;
         }
 
         public async Task<UsuarioDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -55,6 +57,18 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 throw new ValidationException("USR-003", "El nombre de usuario es obligatorio.");
             if (string.IsNullOrWhiteSpace(usuarioCreateDto.Correo))
                 throw new ValidationException("USR-004", "El correo es obligatorio.");
+
+            if (usuarioCreateDto.RolGuid.HasValue)
+            {
+                var rol = await _rolDataService.GetByGuidAsync(usuarioCreateDto.RolGuid.Value, ct);
+                if (rol == null)
+                    throw new NotFoundException("Rol no encontrado");
+
+                if (rol.EsEliminado || rol.EstadoRol == "INA")
+                    throw new BusinessException("El rol especificado no está activo");
+
+                usuarioCreateDto.Roles = new() { rol.ToDto() };
+            }
 
             var dataModel = new Servicio.Hotel.DataManagement.Seguridad.Models.UsuarioDataModel
             {

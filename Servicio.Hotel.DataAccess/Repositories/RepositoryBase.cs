@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.DataAccess.Context;
@@ -45,6 +47,30 @@ namespace Servicio.Hotel.DataAccess.Repositories
             var entity = await GetByIdAsync(id, ct);
             if (entity != null)
             {
+                var entityType = entity.GetType();
+                var esEliminadoProp = entityType.GetProperty("EsEliminado", BindingFlags.Public | BindingFlags.Instance);
+
+                if (esEliminadoProp != null && esEliminadoProp.PropertyType == typeof(bool) && esEliminadoProp.CanWrite)
+                {
+                    esEliminadoProp.SetValue(entity, true);
+
+                    var fechaModProp = entityType.GetProperty("FechaModificacionUtc", BindingFlags.Public | BindingFlags.Instance);
+                    if (fechaModProp != null && fechaModProp.PropertyType == typeof(DateTime?) && fechaModProp.CanWrite)
+                        fechaModProp.SetValue(entity, DateTime.UtcNow);
+
+                    var modificadoPorProp = entityType.GetProperty("ModificadoPorUsuario", BindingFlags.Public | BindingFlags.Instance);
+                    if (modificadoPorProp != null && modificadoPorProp.PropertyType == typeof(string) && modificadoPorProp.CanWrite)
+                    {
+                        var current = (string?)modificadoPorProp.GetValue(entity);
+                        if (string.IsNullOrWhiteSpace(current))
+                            modificadoPorProp.SetValue(entity, "Sistema");
+                    }
+
+                    _dbSet.Update(entity);
+                    await _context.SaveChangesAsync(ct);
+                    return;
+                }
+
                 _dbSet.Remove(entity);
                 await _context.SaveChangesAsync(ct);
             }

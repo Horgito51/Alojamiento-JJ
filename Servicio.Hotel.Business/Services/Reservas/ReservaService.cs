@@ -98,10 +98,16 @@ namespace Servicio.Hotel.Business.Services.Reservas
                 Observaciones = reservaUpdateDto.Observaciones ?? string.Empty
             };
 
-            ReservaValidator.Validate(reservaDto);
             var existing = await _reservaDataService.GetByIdAsync(reservaUpdateDto.IdReserva, ct);
             if (existing == null)
                 throw new NotFoundException("RES-004", $"No se encontró la reserva con ID {reservaUpdateDto.IdReserva}.");
+
+            // Poblamos el DTO con los datos existentes que no vienen en el request para pasar la validación
+            reservaDto.IdCliente = existing.IdCliente;
+            reservaDto.IdSucursal = existing.IdSucursal;
+            reservaDto.OrigenCanalReserva = existing.OrigenCanalReserva;
+
+            ReservaValidator.Validate(reservaDto);
 
             // Solo actualizamos los campos permitidos en la actualización
             existing.FechaInicio = reservaDto.FechaInicio;

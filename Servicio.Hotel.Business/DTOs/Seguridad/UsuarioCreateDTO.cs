@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 
 namespace Servicio.Hotel.Business.DTOs.Seguridad
 {
@@ -11,6 +12,7 @@ namespace Servicio.Hotel.Business.DTOs.Seguridad
         public string Apellidos { get; set; } = string.Empty;
         public string EstadoUsuario { get; set; } = "ACT";
         public bool Activo { get; set; } = true;
+        public Guid? RolGuid { get; set; }
         public List<RolDTO> Roles { get; set; } = new();
     }
 }

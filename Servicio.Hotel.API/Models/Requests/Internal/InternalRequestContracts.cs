@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.DTOs.Hospedaje;
@@ -20,6 +21,12 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string RefreshToken { get; set; } = string.Empty;
     }
 
+    public class CambiarPasswordRequest
+    {
+        public string PasswordActual { get; set; } = string.Empty;
+        public string PasswordNuevo { get; set; } = string.Empty;
+    }
+
     public class UsuarioCreateRequest
     {
         public int? IdCliente { get; set; }
@@ -29,6 +36,8 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string Apellidos { get; set; } = string.Empty;
         public string EstadoUsuario { get; set; } = "ACT";
         public bool Activo { get; set; } = true;
+        [JsonPropertyName("id_rol")]
+        public Guid? RolGuid { get; set; }
         public List<RolDTO> Roles { get; set; } = new();
     }
 
@@ -53,6 +62,11 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string DescripcionRol { get; set; } = string.Empty;
         public string EstadoRol { get; set; } = "ACT";
         public bool Activo { get; set; } = true;
+    }
+
+    public class RolPermisosUpsertRequest
+    {
+        public List<string> Permisos { get; set; } = new();
     }
 
     public class ClienteCreateRequest
@@ -145,13 +159,14 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
 
     public class HabitacionUpdateRequest
     {
+        public int IdSucursal { get; set; }
         public int IdTipoHabitacion { get; set; }
         public string NumeroHabitacion { get; set; } = string.Empty;
         public int? Piso { get; set; }
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
         public string? DescripcionHabitacion { get; set; }
-        public string EstadoHabitacion { get; set; } = "ACT";
+        public string EstadoHabitacion { get; set; } = "DIS";
     }
 
     public class HabitacionEstadoRequest
@@ -220,6 +235,17 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public bool PermiteMascotas { get; set; }
         public bool SePermiteFumar { get; set; }
         public string EstadoSucursal { get; set; } = "ACT";
+    }
+
+    public class SucursalPoliticasPatchRequest
+    {
+        public string? HoraCheckin { get; set; }
+        public string? HoraCheckout { get; set; }
+        public bool PermiteMascotas { get; set; }
+        public bool SePermiteFumar { get; set; }
+        public bool AceptaNinos { get; set; }
+        public bool CheckinAnticipado { get; set; }
+        public bool CheckoutTardio { get; set; }
     }
 
     public class CatalogoServicioUpsertRequest
@@ -329,6 +355,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Apellidos = request.Apellidos,
                 EstadoUsuario = request.EstadoUsuario,
                 Activo = request.Activo,
+                RolGuid = request.RolGuid,
                 Roles = request.Roles
             };
 
@@ -455,6 +482,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
             => new()
             {
                 IdHabitacion = id,
+                IdSucursal = request.IdSucursal,
                 IdTipoHabitacion = request.IdTipoHabitacion,
                 NumeroHabitacion = request.NumeroHabitacion,
                 Piso = request.Piso,
@@ -565,6 +593,18 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 PermiteMascotas = request.PermiteMascotas,
                 SePermiteFumar = request.SePermiteFumar,
                 EstadoSucursal = request.EstadoSucursal
+            };
+
+        public static Servicio.Hotel.Business.DTOs.Alojamiento.SucursalPoliticasUpdateDTO ToDto(this SucursalPoliticasPatchRequest request)
+            => new()
+            {
+                HoraCheckin = request.HoraCheckin,
+                HoraCheckout = request.HoraCheckout,
+                PermiteMascotas = request.PermiteMascotas,
+                SePermiteFumar = request.SePermiteFumar,
+                AceptaNinos = request.AceptaNinos,
+                CheckinAnticipado = request.CheckinAnticipado,
+                CheckoutTardio = request.CheckoutTardio
             };
 
         public static Servicio.Hotel.Business.DTOs.Alojamiento.SucursalUpdateDTO ToUpdateDto(this SucursalUpsertRequest request, int id)

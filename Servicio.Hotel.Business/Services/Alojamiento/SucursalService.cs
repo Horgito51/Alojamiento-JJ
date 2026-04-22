@@ -1,11 +1,15 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using Servicio.Hotel.Business.Mappers.Alojamiento;
+using Servicio.Hotel.Business.Validators.Alojamiento;
 using Servicio.Hotel.DataManagement.Alojamiento.Interfaces;
+using Servicio.Hotel.DataManagement.Alojamiento.Models;
 
 namespace Servicio.Hotel.Business.Services.Alojamiento
 {
@@ -18,15 +22,27 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             _dataService = dataService;
         }
 
-        public async Task<IEnumerable<SucursalDTO>> GetAllAsync(CancellationToken ct = default)
-            => (await _dataService.GetAllAsync(ct)).ToDtoList();
+        public async Task<IEnumerable<SucursalDTO>> GetAllAsync(string? estado = null, CancellationToken ct = default)
+        {
+            var all = (await _dataService.GetAllAsync(ct)).ToDtoList();
+
+            if (!string.IsNullOrWhiteSpace(estado))
+                return all.Where(s => s.EstadoSucursal == estado).ToList();
+
+            return all.Where(s => s.EstadoSucursal != "INA").ToList();
+        }
 
         public async Task<SucursalDTO> GetByIdAsync(int id, CancellationToken ct = default)
             => (await _dataService.GetByIdAsync(id, ct)).ToDto()
                ?? throw new NotFoundException("SUC-001", $"No se encontró la sucursal con ID {id}.");
 
+        public async Task<SucursalDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default)
+            => (await _dataService.GetByGuidAsync(guid, ct)).ToDto()
+               ?? throw new NotFoundException("SUC-001", $"No se encontrÃ³ la sucursal con GUID {guid}.");
+
         public async Task<SucursalDTO> CreateAsync(SucursalCreateDTO dto, CancellationToken ct = default)
         {
+            SucursalValidator.ValidateCreate(dto);
             var created = await _dataService.AddAsync(dto.ToDataModel()!, ct);
             return created.ToDto()!;
         }
@@ -37,10 +53,49 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             await _dataService.UpdateAsync(dto.ToDataModel()!, ct);
         }
 
+        public async Task UpdatePoliticasAsync(Guid sucursalGuid, SucursalPoliticasUpdateDTO dto, string usuario, CancellationToken ct = default)
+        {
+            var existing = await _dataService.GetByGuidAsync(sucursalGuid, ct);
+            if (existing == null)
+                throw new NotFoundException("SUC-001", $"No se encontrÃ³ la sucursal con GUID {sucursalGuid}.");
+
+            var politicas = new SucursalDataModel
+            {
+                HoraCheckin = dto.HoraCheckin,
+                HoraCheckout = dto.HoraCheckout,
+                PermiteMascotas = dto.PermiteMascotas,
+                SePermiteFumar = dto.SePermiteFumar,
+                AceptaNinos = dto.AceptaNinos,
+                CheckinAnticipado = dto.CheckinAnticipado,
+                CheckoutTardio = dto.CheckoutTardio,
+                ModificadoPorUsuario = usuario
+            };
+
+            await _dataService.UpdatePoliticasAsync(existing.IdSucursal, politicas, ct);
+        }
+
+        public async Task InhabilitarAsync(Guid sucursalGuid, string motivo, string usuario, CancellationToken ct = default)
+        {
+            var existing = await _dataService.GetByGuidAsync(sucursalGuid, ct);
+            if (existing == null)
+                throw new NotFoundException("SUC-001", $"No se encontrÃ³ la sucursal con GUID {sucursalGuid}.");
+
+            await _dataService.InhabilitarAsync(existing.IdSucursal, motivo, usuario, ct);
+        }
+
         public async Task DeleteAsync(int id, CancellationToken ct = default)
         {
             _ = await GetByIdAsync(id, ct);
             await _dataService.DeleteAsync(id, ct);
+        }
+
+        public async Task DeleteAsync(Guid guid, CancellationToken ct = default)
+        {
+            var existing = await _dataService.GetByGuidAsync(guid, ct);
+            if (existing == null)
+                throw new NotFoundException("SUC-001", $"No se encontrÃ³ la sucursal con GUID {guid}.");
+
+            await _dataService.DeleteAsync(existing.IdSucursal, ct);
         }
     }
 }
