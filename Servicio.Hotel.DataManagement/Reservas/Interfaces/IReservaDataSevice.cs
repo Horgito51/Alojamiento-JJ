@@ -21,5 +21,6 @@ namespace Servicio.Hotel.DataManagement.Reservas.Interfaces
         Task FinalizarAsync(int idReserva, string usuario, CancellationToken ct = default);
         Task<bool> PuedeCancelarAsync(int idReserva, CancellationToken ct = default);
         Task<int> ConfirmarReservaHabitacionAsync(int idReserva, int idHabitacion, int? idTarifa, DateTime fechaInicio, DateTime fechaFin, int numAdultos, int numNinos, decimal precioNoche, string usuario, CancellationToken ct = default);
+        Task<bool> ExisteSolapamientoAsync(int idHabitacion, DateTime fechaInicio, DateTime fechaFin, int? excludeIdReserva = null, CancellationToken ct = default);
     }
 }

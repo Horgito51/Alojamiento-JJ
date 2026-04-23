@@ -18,5 +18,8 @@ namespace Servicio.Hotel.DataAccess.Repositories.Interfaces.Reservas
 
         // Operaciones de escritura
         Task UpdateEstadoDetalleAsync(int idReservaHabitacion, string nuevoEstado, string usuario, CancellationToken ct = default);
+
+        // Validaciones de negocio
+        Task<bool> ExistsSolapamientoAsync(int idHabitacion, DateTime fechaInicio, DateTime fechaFin, int? excludeIdReserva = null, CancellationToken ct = default);
     }
 }

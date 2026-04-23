@@ -57,6 +57,22 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
                 .FirstOrDefaultAsync(ct);
         }
 
+        public async Task<TarifaEntity?> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, CancellationToken ct = default)
+        {
+            // fechaFin es checkout (exclusivo): las noches aplican hasta fechaFin - 1 día
+            var start = fechaInicio.Date;
+            var endInclusive = fechaFin.Date.AddDays(-1);
+
+            return await _dbSet
+                .Where(t => t.IdSucursal == idSucursal
+                            && t.IdTipoHabitacion == idTipoHabitacion
+                            && t.EstadoTarifa == "ACT"
+                            && t.FechaInicio.Date <= start
+                            && t.FechaFin.Date >= endInclusive)
+                .OrderBy(t => t.Prioridad)
+                .FirstOrDefaultAsync(ct);
+        }
+
         public async Task<IEnumerable<TarifaEntity>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default)
         {
             return await _dbSet.Where(t => t.IdSucursal == idSucursal).ToListAsync(ct);

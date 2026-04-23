@@ -25,6 +25,9 @@ namespace Servicio.Hotel.Business.Validators.Reservas
             if (string.IsNullOrWhiteSpace(cliente.Correo))
                 errors["Correo"] = new[] { "El correo electrónico es obligatorio." };
 
+            if (string.IsNullOrWhiteSpace(cliente.Telefono))
+                errors["Telefono"] = new[] { "El teléfono es obligatorio." };
+
             if (errors.Count > 0)
                 throw new ValidationException("CLI-002", errors);
         }

@@ -22,6 +22,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Interfaces.Alojamiento
 
         // Nuevos métodos necesarios
         Task<TarifaEntity?> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default);
+        Task<TarifaEntity?> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, CancellationToken ct = default);
         Task<IEnumerable<TarifaEntity>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
     }
 }

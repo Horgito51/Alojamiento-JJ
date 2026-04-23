@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -6,6 +8,7 @@ using Servicio.Hotel.Business.DTOs.Valoraciones;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Valoraciones;
 using Servicio.Hotel.Business.Mappers.Valoraciones;
+using Servicio.Hotel.DataManagement.Hospedaje.Interfaces;
 using Servicio.Hotel.DataManagement.Valoraciones.Interfaces;
 
 namespace Servicio.Hotel.Business.Services.Valoraciones
@@ -13,10 +16,12 @@ namespace Servicio.Hotel.Business.Services.Valoraciones
     public class ValoracionService : IValoracionService
     {
         private readonly IValoracionDataService _valoracionDataService;
+        private readonly IEstadiaDataService _estadiaDataService;
 
-        public ValoracionService(IValoracionDataService valoracionDataService)
+        public ValoracionService(IValoracionDataService valoracionDataService, IEstadiaDataService estadiaDataService)
         {
             _valoracionDataService = valoracionDataService;
+            _estadiaDataService = estadiaDataService;
         }
 
         public async Task<ValoracionDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -47,10 +52,48 @@ namespace Servicio.Hotel.Business.Services.Valoraciones
             };
         }
 
-        public async Task<ValoracionDTO> CreateAsync(ValoracionDTO valoracionDto, CancellationToken ct = default)
+public async Task<ValoracionDTO> CreateAsync(ValoracionDTO valoracionDto, CancellationToken ct = default)
         {
-            if (valoracionDto.PuntuacionGeneral < 0 || valoracionDto.PuntuacionGeneral > 10)
-                throw new ValidationException("VAL-003", "La puntuación general debe estar entre 0 y 10.");
+            static void ValidateScore(string field, decimal score)
+            {
+                if (score < 0 || score > 10)
+                    throw new BusinessException($"La puntuación '{field}' debe estar entre 0 y 10.");
+            }
+
+            var estadia = await _estadiaDataService.GetByIdAsync(valoracionDto.IdEstadia, ct);
+            if (estadia == null)
+                throw new NotFoundException("VAL-003", $"No se encontro la estadia con ID {valoracionDto.IdEstadia}.");
+
+            if (estadia.EstadoEstadia != "FIN")
+                throw new ConflictException("Solo se pueden valorar estadías finalizadas (estado FIN).");
+
+            var scores = new List<decimal>();
+            if (valoracionDto.PuntuacionLimpieza.HasValue) scores.Add(valoracionDto.PuntuacionLimpieza.Value);
+            if (valoracionDto.PuntuacionConfort.HasValue) scores.Add(valoracionDto.PuntuacionConfort.Value);
+            if (valoracionDto.PuntuacionUbicacion.HasValue) scores.Add(valoracionDto.PuntuacionUbicacion.Value);
+            if (valoracionDto.PuntuacionInstalaciones.HasValue) scores.Add(valoracionDto.PuntuacionInstalaciones.Value);
+            if (valoracionDto.PuntuacionPersonal.HasValue) scores.Add(valoracionDto.PuntuacionPersonal.Value);
+            if (valoracionDto.PuntuacionCalidadPrecio.HasValue) scores.Add(valoracionDto.PuntuacionCalidadPrecio.Value);
+
+            if (scores.Count == 0)
+                throw new ValidationException("VAL-004", "Se requiere al menos una puntuacion para registrar la valoracion.");
+
+            valoracionDto.PuntuacionGeneral = Math.Round(scores.Sum() / scores.Count, 1, MidpointRounding.AwayFromZero);
+            ValidateScore(nameof(valoracionDto.PuntuacionGeneral), valoracionDto.PuntuacionGeneral);
+
+            if (valoracionDto.PuntuacionLimpieza.HasValue)
+                ValidateScore(nameof(valoracionDto.PuntuacionLimpieza), valoracionDto.PuntuacionLimpieza.Value);
+            if (valoracionDto.PuntuacionConfort.HasValue)
+                ValidateScore(nameof(valoracionDto.PuntuacionConfort), valoracionDto.PuntuacionConfort.Value);
+            if (valoracionDto.PuntuacionUbicacion.HasValue)
+                ValidateScore(nameof(valoracionDto.PuntuacionUbicacion), valoracionDto.PuntuacionUbicacion.Value);
+            if (valoracionDto.PuntuacionInstalaciones.HasValue)
+                ValidateScore(nameof(valoracionDto.PuntuacionInstalaciones), valoracionDto.PuntuacionInstalaciones.Value);
+            if (valoracionDto.PuntuacionPersonal.HasValue)
+                ValidateScore(nameof(valoracionDto.PuntuacionPersonal), valoracionDto.PuntuacionPersonal.Value);
+            if (valoracionDto.PuntuacionCalidadPrecio.HasValue)
+                ValidateScore(nameof(valoracionDto.PuntuacionCalidadPrecio), valoracionDto.PuntuacionCalidadPrecio.Value);
+
             var dataModel = valoracionDto.ToDataModel();
             var created = await _valoracionDataService.AddAsync(dataModel, ct);
             return created.ToDto();

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -131,19 +132,56 @@ namespace Servicio.Hotel.Business.Services.Reservas
             await _reservaDataService.DeleteAsync(id, ct);
         }
 
-        public async Task ConfirmarAsync(int idReserva, string usuario, CancellationToken ct = default)
+public async Task ConfirmarAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)
                 throw new NotFoundException("RES-006", $"No se encontró la reserva con ID {idReserva}.");
+
+            if (existing.EstadoReserva == "CON")
+                throw new ConflictException("La reserva ya está confirmada.");
+
+            if (existing.EstadoReserva != "PEN")
+                throw new ConflictException($"No se puede confirmar una reserva en estado '{existing.EstadoReserva}'.");
+
+            if (existing.Habitaciones == null || existing.Habitaciones.Count == 0)
+                throw new ValidationException("RES-010", "La reserva no tiene habitaciones asociadas.");
+
+            var habitacionesConConflicto = new HashSet<int>();
+            foreach (var detalle in existing.Habitaciones)
+            {
+                var solapa = await _reservaDataService.ExisteSolapamientoAsync(
+                    detalle.IdHabitacion,
+                    detalle.FechaInicio,
+                    detalle.FechaFin,
+                    excludeIdReserva: idReserva,
+                    ct: ct);
+
+                if (solapa)
+                    habitacionesConConflicto.Add(detalle.IdHabitacion);
+            }
+
+            if (habitacionesConConflicto.Count > 0)
+            {
+                var ids = string.Join(", ", habitacionesConConflicto);
+                throw new ConflictException($"No se puede confirmar la reserva: las habitaciones {ids} ya están ocupadas en el rango {existing.FechaInicio:yyyy-MM-dd} a {existing.FechaFin:yyyy-MM-dd}.");
+            }
+
             await _reservaDataService.ConfirmarAsync(idReserva, usuario, ct);
         }
 
-        public async Task CancelarAsync(int idReserva, string motivo, string usuario, CancellationToken ct = default)
+public async Task CancelarAsync(int idReserva, string motivo, string usuario, CancellationToken ct = default)
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)
                 throw new NotFoundException("RES-007", $"No se encontró la reserva con ID {idReserva}.");
+
+            if (existing.EstadoReserva == "CAN")
+                throw new ConflictException("La reserva ya está cancelada.");
+
+            if (existing.EstadoReserva != "PEN" && existing.EstadoReserva != "CON")
+                throw new ConflictException($"No se puede cancelar una reserva en estado '{existing.EstadoReserva}'.");
+
             await _reservaDataService.CancelarAsync(idReserva, motivo, usuario, ct);
         }
 

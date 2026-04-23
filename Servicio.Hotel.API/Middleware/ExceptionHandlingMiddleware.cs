@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
@@ -43,12 +44,14 @@ namespace Servicio.Hotel.API.Middleware
                 Servicio.Hotel.Business.Exceptions.ValidationException valEx => (HttpStatusCode.BadRequest, valEx.Message, valEx.Errors is null ? null : new Dictionary<string, string[]>(valEx.Errors)),
                 Servicio.Hotel.Business.Exceptions.UnauthorizedBusinessException authEx => (HttpStatusCode.Unauthorized, authEx.Message, null),
                 Servicio.Hotel.Business.Exceptions.NotFoundException nfEx => (HttpStatusCode.NotFound, nfEx.Message, null),
+                Servicio.Hotel.Business.Exceptions.ConflictException confEx => (HttpStatusCode.Conflict, confEx.Message, null),
                 Servicio.Hotel.Business.Exceptions.BusinessException bizEx => (HttpStatusCode.UnprocessableEntity, bizEx.Message, null),
-                DbUpdateException dbEx => (HttpStatusCode.Conflict, ParseDbUpdateException(dbEx), null),
+                Servicio.Hotel.DataManagement.Exceptions.DomainException domEx => (HttpStatusCode.UnprocessableEntity, domEx.Message, null),
+                DbUpdateException dbEx => ParseDbUpdateExceptionWithStatus(dbEx),
                 KeyNotFoundException => (HttpStatusCode.NotFound, "El recurso solicitado no fue encontrado.", null),
                 UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "No autorizado.", null),
                 ArgumentException argEx => (HttpStatusCode.BadRequest, isDevelopment ? argEx.Message : "Solicitud inválida.", null),
-                InvalidOperationException => (HttpStatusCode.Conflict, "Conflicto con el estado actual.", null),
+                InvalidOperationException invEx => (HttpStatusCode.Conflict, invEx.Message, null),
                 _ => (HttpStatusCode.InternalServerError,
                       isDevelopment
                           ? $"{exception.GetType().Name}: {exception.Message}{(exception.InnerException != null ? $" | Inner: {exception.InnerException.Message}" : "")}"
@@ -74,6 +77,37 @@ namespace Servicio.Hotel.API.Middleware
             var json = JsonSerializer.Serialize(errorResponse, jsonOptions);
             await context.Response.WriteAsync(json);
         }
+        private static (HttpStatusCode statusCode, string message, Dictionary<string, string[]>? validationErrors) ParseDbUpdateExceptionWithStatus(DbUpdateException ex)
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+
+            if (inner.Contains("CHECK constraint"))
+                return (HttpStatusCode.UnprocessableEntity, ParseDbUpdateException(ex), null);
+
+            if (inner.Contains("Cannot insert the value NULL into column") || inner.Contains("cannot be null") || inner.Contains("NULL"))
+            {
+                var col = TryExtractBetween(inner, "column '", "'");
+                if (string.IsNullOrWhiteSpace(col))
+                    col = TryExtractBetween(inner, "column \"", "\"");
+
+                var table = TryExtractBetween(inner, "table '", "'");
+                if (string.IsNullOrWhiteSpace(table))
+                    table = TryExtractBetween(inner, "table \"", "\"");
+
+                var suffix = string.IsNullOrWhiteSpace(table) ? string.Empty : $" (tabla {table})";
+                var colText = string.IsNullOrWhiteSpace(col) ? "un campo obligatorio" : $"el campo obligatorio '{col}'";
+                return (HttpStatusCode.BadRequest, $"Falta {colText}{suffix}.", null);
+            }
+
+            if (inner.Contains("FOREIGN KEY") || inner.Contains("FK_"))
+                return (HttpStatusCode.UnprocessableEntity, ParseDbUpdateException(ex), null);
+
+            if (inner.Contains("UQ_") || inner.Contains("UNIQUE KEY") || inner.Contains("duplicate key"))
+                return (HttpStatusCode.Conflict, ParseDbUpdateException(ex), null);
+
+            return (HttpStatusCode.Conflict, ParseDbUpdateException(ex), null);
+        }
+
         private static string ParseDbUpdateException(DbUpdateException ex)
         {
             var inner = ex.InnerException?.Message ?? ex.Message;
@@ -111,6 +145,16 @@ namespace Servicio.Hotel.API.Middleware
                 return "El registro referencia un elemento que no existe. Verifique los IDs relacionados.";
 
             return $"Error al guardar los datos: {inner}";
+        }
+
+        private static string TryExtractBetween(string input, string start, string end)
+        {
+            var startIndex = input.IndexOf(start, StringComparison.OrdinalIgnoreCase);
+            if (startIndex < 0) return string.Empty;
+            startIndex += start.Length;
+            var endIndex = input.IndexOf(end, startIndex, StringComparison.OrdinalIgnoreCase);
+            if (endIndex < 0 || endIndex <= startIndex) return string.Empty;
+            return input.Substring(startIndex, endIndex - startIndex);
         }
     }
 }

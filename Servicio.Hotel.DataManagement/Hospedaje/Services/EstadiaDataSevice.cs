@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.DataAccess.Repositories.Interfaces.Hospedaje;
@@ -99,6 +100,11 @@ namespace Servicio.Hotel.DataManagement.Hospedaje.Services
             return result;
         }
 
+        public async Task<IEnumerable<EstadiaDataModel>> GetByReservaAsync(int idReserva, CancellationToken ct = default)
+        {
+            return (await _estadiaRepository.GetByReservaAsync(idReserva, ct)).ToModelList();
+        }
+
         public async Task<CargoEstadiaDataModel> AddCargoAsync(int idEstadia, CargoEstadiaDataModel cargo, CancellationToken ct = default)
         {
             var entity = cargo.ToEntity();
@@ -110,6 +116,12 @@ namespace Servicio.Hotel.DataManagement.Hospedaje.Services
             var added = await _cargoEstadiaRepository.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return added.ToModel();
+        }
+
+        public async Task<CargoEstadiaDataModel?> GetCargoByIdAsync(int idCargo, CancellationToken ct = default)
+        {
+            var entity = await _cargoEstadiaRepository.GetByIdAsync(idCargo, ct);
+            return entity?.ToModel();
         }
 
         public async Task AnularCargoAsync(int idCargo, string usuario, CancellationToken ct = default)

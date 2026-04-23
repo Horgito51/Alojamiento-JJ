@@ -12,6 +12,11 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Models
         public string Correo { get; set; }
         public string Nombres { get; set; }
         public string Apellidos { get; set; }
+
+        // Campos obligatorios en DB (seguridad.USUARIO_APP)
+        public string? PasswordHash { get; set; }
+        public string? PasswordSalt { get; set; }
+
         public string EstadoUsuario { get; set; }
         public bool EsEliminado { get; set; }
         public bool Activo { get; set; }

@@ -44,20 +44,76 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
 
         public async Task<TarifaDTO> CreateAsync(TarifaCreateDTO tarifaCreateDto, CancellationToken ct = default)
         {
-            if (tarifaCreateDto.PrecioPorNoche <= 0)
-                throw new ValidationException("TAR-003", "El precio por noche debe ser mayor a cero.");
+            var tarifaDto = new TarifaDTO
+            {
+                CodigoTarifa = tarifaCreateDto.CodigoTarifa?.Trim() ?? string.Empty,
+                IdSucursal = tarifaCreateDto.IdSucursal,
+                IdTipoHabitacion = tarifaCreateDto.IdTipoHabitacion,
+                NombreTarifa = tarifaCreateDto.NombreTarifa?.Trim() ?? string.Empty,
+                CanalTarifa = tarifaCreateDto.CanalTarifa?.Trim() ?? string.Empty,
+                FechaInicio = tarifaCreateDto.FechaInicio,
+                FechaFin = tarifaCreateDto.FechaFin,
+                PrecioPorNoche = tarifaCreateDto.PrecioPorNoche,
+                PorcentajeIva = tarifaCreateDto.PorcentajeIva,
+                MinNoches = tarifaCreateDto.MinNoches,
+                MaxNoches = tarifaCreateDto.MaxNoches,
+                PermitePortalPublico = tarifaCreateDto.PermitePortalPublico,
+                Prioridad = tarifaCreateDto.Prioridad,
+                EstadoTarifa = (tarifaCreateDto.EstadoTarifa ?? string.Empty).Trim().ToUpperInvariant()
+            };
+
+            TarifaValidator.Validate(tarifaDto);
+
             var dataModel = tarifaCreateDto.ToDataModel();
             var created = await _tarifaDataService.AddAsync(dataModel, ct);
             return created.ToDto();
         }
 
-        public async Task UpdateAsync(TarifaUpdateDTO tarifaUpdateDto, CancellationToken ct = default)
+public async Task UpdateAsync(TarifaUpdateDTO tarifaUpdateDto, CancellationToken ct = default)
         {
             var existing = await _tarifaDataService.GetByIdAsync(tarifaUpdateDto.IdTarifa, ct);
             if (existing == null)
                 throw new NotFoundException("TAR-004", $"No se encontró la tarifa con ID {tarifaUpdateDto.IdTarifa}.");
-            var dataModel = tarifaUpdateDto.ToDataModel();
-            await _tarifaDataService.UpdateAsync(dataModel, ct);
+
+            var tarifaDto = new TarifaDTO
+            {
+                IdTarifa = tarifaUpdateDto.IdTarifa,
+                CodigoTarifa = tarifaUpdateDto.CodigoTarifa?.Trim() ?? string.Empty,
+                IdSucursal = tarifaUpdateDto.IdSucursal,
+                IdTipoHabitacion = tarifaUpdateDto.IdTipoHabitacion,
+                NombreTarifa = tarifaUpdateDto.NombreTarifa?.Trim() ?? string.Empty,
+                CanalTarifa = tarifaUpdateDto.CanalTarifa?.Trim() ?? string.Empty,
+                FechaInicio = tarifaUpdateDto.FechaInicio,
+                FechaFin = tarifaUpdateDto.FechaFin,
+                PrecioPorNoche = tarifaUpdateDto.PrecioPorNoche,
+                PorcentajeIva = tarifaUpdateDto.PorcentajeIva,
+                MinNoches = tarifaUpdateDto.MinNoches,
+                MaxNoches = tarifaUpdateDto.MaxNoches,
+                PermitePortalPublico = tarifaUpdateDto.PermitePortalPublico,
+                Prioridad = tarifaUpdateDto.Prioridad,
+                EstadoTarifa = (tarifaUpdateDto.EstadoTarifa ?? string.Empty).Trim().ToUpperInvariant()
+            };
+
+            TarifaValidator.Validate(tarifaDto);
+
+            existing.CodigoTarifa = tarifaDto.CodigoTarifa;
+            existing.IdSucursal = tarifaDto.IdSucursal;
+            existing.IdTipoHabitacion = tarifaDto.IdTipoHabitacion;
+            existing.NombreTarifa = tarifaDto.NombreTarifa;
+            existing.CanalTarifa = tarifaDto.CanalTarifa;
+            existing.FechaInicio = tarifaDto.FechaInicio;
+            existing.FechaFin = tarifaDto.FechaFin;
+            existing.PrecioPorNoche = tarifaDto.PrecioPorNoche;
+            existing.PorcentajeIva = tarifaDto.PorcentajeIva;
+            existing.MinNoches = tarifaDto.MinNoches;
+            existing.MaxNoches = tarifaDto.MaxNoches;
+            existing.PermitePortalPublico = tarifaDto.PermitePortalPublico;
+            existing.Prioridad = tarifaDto.Prioridad;
+            existing.EstadoTarifa = tarifaDto.EstadoTarifa;
+            existing.ModificadoPorUsuario = "Sistema";
+            existing.FechaModificacionUtc = DateTime.UtcNow;
+
+            await _tarifaDataService.UpdateAsync(existing, ct);
         }
 
         public async Task DeleteAsync(int id, CancellationToken ct = default)

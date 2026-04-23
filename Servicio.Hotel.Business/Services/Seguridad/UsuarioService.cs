@@ -57,9 +57,50 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 throw new ValidationException("USR-003", "El nombre de usuario es obligatorio.");
             if (string.IsNullOrWhiteSpace(usuarioCreateDto.Correo))
                 throw new ValidationException("USR-004", "El correo es obligatorio.");
+            if (string.IsNullOrWhiteSpace(usuarioCreateDto.Nombres))
+                throw new ValidationException("USR-012", "Los nombres son obligatorios.");
 
-            if (usuarioCreateDto.RolGuid.HasValue)
+            // Contrato actual: lista de IDs de roles (Roles: [1,2])
+            var roleIds = usuarioCreateDto.Roles?
+                .Select(r => r.IdRol)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList() ?? new();
+
+            if (roleIds.Count > 0)
             {
+                var resolved = new System.Collections.Generic.List<RolDTO>();
+                foreach (var roleId in roleIds)
+                {
+                    var rol = await _rolDataService.GetByIdAsync(roleId, ct);
+                    if (rol == null)
+                        throw new NotFoundException("ROL-001", $"Rol no encontrado con ID {roleId}.");
+
+                    if (rol.EsEliminado || rol.EstadoRol == "INA")
+                        throw new BusinessException("El rol especificado no esta activo.");
+
+                    resolved.Add(rol.ToDto());
+                }
+
+                usuarioCreateDto.IdRol = null;
+                usuarioCreateDto.RolGuid = null;
+                usuarioCreateDto.Roles = resolved;
+            }
+
+if (usuarioCreateDto.IdRol.HasValue && (usuarioCreateDto.Roles == null || usuarioCreateDto.Roles.Count == 0))
+            {
+                var rol = await _rolDataService.GetByIdAsync(usuarioCreateDto.IdRol.Value, ct);
+                if (rol == null)
+                    throw new NotFoundException("Rol no encontrado");
+
+                if (rol.EsEliminado || rol.EstadoRol == "INA")
+                    throw new BusinessException("El rol especificado no está activo");
+
+                usuarioCreateDto.Roles = new() { rol.ToDto() };
+            }
+            else if (usuarioCreateDto.RolGuid.HasValue)
+            {
+                // Compatibilidad: algunos clientes antiguos envían rol por GUID
                 var rol = await _rolDataService.GetByGuidAsync(usuarioCreateDto.RolGuid.Value, ct);
                 if (rol == null)
                     throw new NotFoundException("Rol no encontrado");
@@ -70,6 +111,11 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 usuarioCreateDto.Roles = new() { rol.ToDto() };
             }
 
+            if (usuarioCreateDto.Roles == null || usuarioCreateDto.Roles.Count == 0)
+                throw new ValidationException("USR-011", "El usuario debe tener al menos un rol.");
+
+            var (hash, salt) = PasswordHasher.HashPassword("HotelJJ123!");
+
             var dataModel = new Servicio.Hotel.DataManagement.Seguridad.Models.UsuarioDataModel
             {
                 IdCliente = usuarioCreateDto.IdCliente,
@@ -79,6 +125,8 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 Apellidos = usuarioCreateDto.Apellidos,
                 EstadoUsuario = usuarioCreateDto.EstadoUsuario,
                 Activo = usuarioCreateDto.Activo,
+                PasswordHash = hash,
+                PasswordSalt = salt,
                 Roles = usuarioCreateDto.Roles?.Select(r => r.ToDataModel()).ToList()
             };
 

@@ -12,6 +12,7 @@ namespace Servicio.Hotel.Business.DTOs.Seguridad
         public string Apellidos { get; set; } = string.Empty;
         public string EstadoUsuario { get; set; } = "ACT";
         public bool Activo { get; set; } = true;
+        public int? IdRol { get; set; }
         public Guid? RolGuid { get; set; }
         public List<RolDTO> Roles { get; set; } = new();
     }

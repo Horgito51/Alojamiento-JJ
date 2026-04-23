@@ -36,9 +36,11 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string Apellidos { get; set; } = string.Empty;
         public string EstadoUsuario { get; set; } = "ACT";
         public bool Activo { get; set; } = true;
-        [JsonPropertyName("id_rol")]
-        public Guid? RolGuid { get; set; }
-        public List<RolDTO> Roles { get; set; } = new();
+        // Compatibilidad con clientes antiguos
+        public int? IdRol { get; set; }
+
+        // Contrato actual: IDs de roles
+        public List<int> Roles { get; set; } = new();
     }
 
     public class UsuarioUpdateRequest
@@ -108,7 +110,14 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string EstadoReserva { get; set; } = "PEN";
         public string? Observaciones { get; set; }
         public bool EsWalkin { get; set; }
-        public List<ReservaHabitacionCreateRequest> Habitaciones { get; set; } = new();
+
+        [JsonConverter(typeof(ReservaHabitacionIdListJsonConverter))]
+        public List<ReservaHabitacionIdRequest> Habitaciones { get; set; } = new();
+    }
+
+    public class ReservaHabitacionIdRequest
+    {
+        public int IdHabitacion { get; set; }
     }
 
     public class ReservaHabitacionCreateRequest
@@ -154,7 +163,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
         public string? DescripcionHabitacion { get; set; }
-        public string EstadoHabitacion { get; set; } = "ACT";
+        public string EstadoHabitacion { get; set; } = "DIS";
     }
 
     public class HabitacionUpdateRequest
@@ -318,7 +327,6 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public int IdCliente { get; set; }
         public int IdSucursal { get; set; }
         public int? IdHabitacion { get; set; }
-        public decimal PuntuacionGeneral { get; set; }
         public decimal? PuntuacionLimpieza { get; set; }
         public decimal? PuntuacionConfort { get; set; }
         public decimal? PuntuacionUbicacion { get; set; }
@@ -355,8 +363,10 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Apellidos = request.Apellidos,
                 EstadoUsuario = request.EstadoUsuario,
                 Activo = request.Activo,
-                RolGuid = request.RolGuid,
-                Roles = request.Roles
+                IdRol = request.IdRol,
+                Roles = (request.Roles != null && request.Roles.Count > 0)
+                    ? request.Roles.Distinct().Select(id => new RolDTO { IdRol = id }).ToList()
+                    : (request.IdRol.HasValue ? new List<RolDTO> { new RolDTO { IdRol = request.IdRol.Value } } : new List<RolDTO>())
             };
 
         public static Servicio.Hotel.Business.DTOs.Seguridad.UsuarioUpdateDTO ToUpdateDto(this UsuarioUpdateRequest request, int id)
@@ -436,17 +446,17 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Habitaciones = request.Habitaciones.Select(h => new Servicio.Hotel.Business.DTOs.Reservas.ReservaHabitacionDTO
                 {
                     IdHabitacion = h.IdHabitacion,
-                    IdTarifa = h.IdTarifa,
-                    FechaInicio = h.FechaInicio,
-                    FechaFin = h.FechaFin,
-                    NumAdultos = h.NumAdultos,
-                    NumNinos = h.NumNinos,
-                    PrecioNocheAplicado = h.PrecioNocheAplicado,
-                    SubtotalLinea = h.SubtotalLinea,
-                    ValorIvaLinea = h.ValorIvaLinea,
-                    DescuentoLinea = h.DescuentoLinea,
-                    TotalLinea = h.TotalLinea,
-                    EstadoDetalle = h.EstadoDetalle
+                    FechaInicio = request.FechaInicio,
+                    FechaFin = request.FechaFin,
+                    NumAdultos = 1,
+                    NumNinos = 0,
+                    IdTarifa = null,
+                    PrecioNocheAplicado = 0,
+                    SubtotalLinea = 0,
+                    ValorIvaLinea = 0,
+                    DescuentoLinea = 0,
+                    TotalLinea = 0,
+                    EstadoDetalle = "PEN"
                 }).ToList()
             };
 
@@ -717,7 +727,6 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 IdCliente = request.IdCliente,
                 IdSucursal = request.IdSucursal,
                 IdHabitacion = request.IdHabitacion,
-                PuntuacionGeneral = request.PuntuacionGeneral,
                 PuntuacionLimpieza = request.PuntuacionLimpieza,
                 PuntuacionConfort = request.PuntuacionConfort,
                 PuntuacionUbicacion = request.PuntuacionUbicacion,

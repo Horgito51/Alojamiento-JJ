@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -13,10 +15,14 @@ namespace Servicio.Hotel.Business.Services.Hospedaje
     public class EstadiaService : IEstadiaService
     {
         private readonly IEstadiaDataService _estadiaDataService;
+        private readonly Servicio.Hotel.DataManagement.Reservas.Interfaces.IReservaDataService _reservaDataService;
 
-        public EstadiaService(IEstadiaDataService estadiaDataService)
+        public EstadiaService(
+            IEstadiaDataService estadiaDataService,
+            Servicio.Hotel.DataManagement.Reservas.Interfaces.IReservaDataService reservaDataService)
         {
             _estadiaDataService = estadiaDataService;
+            _reservaDataService = reservaDataService;
         }
 
         public async Task<EstadiaDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -73,9 +79,28 @@ namespace Servicio.Hotel.Business.Services.Hospedaje
             await _estadiaDataService.RegistrarCheckoutAsync(idEstadia, observaciones, requiereMantenimiento, usuario, ct);
         }
 
-        public async Task<int> HacerCheckinAsync(int idReserva, string usuario, CancellationToken ct = default)
+        public async Task<IEnumerable<EstadiaDTO>> HacerCheckinAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
-            return await _estadiaDataService.HacerCheckinAsync(idReserva, usuario, ct);
+            var reserva = await _reservaDataService.GetByIdAsync(idReserva, ct);
+            if (reserva == null)
+                throw new NotFoundException("RES-001", $"No se encontró la reserva con ID {idReserva}.");
+
+            if (!string.Equals(reserva.EstadoReserva?.Trim(), "CON", StringComparison.Ordinal))
+                throw new ConflictException("La reserva debe estar en estado CON para realizar el check-in.");
+
+            var existentes = await _estadiaDataService.GetByReservaAsync(idReserva, ct);
+            if (existentes != null && existentes.Any())
+                throw new ConflictException("Ya existe un check-in registrado para esta reserva.");
+
+            await _estadiaDataService.HacerCheckinAsync(idReserva, usuario, ct);
+
+            var estadias = await _estadiaDataService.GetByReservaAsync(idReserva, ct);
+            var dtos = estadias.ToDtoList();
+
+            if (dtos.Count == 0)
+                throw new ConflictException("No se generaron estadías para la reserva especificada.");
+
+            return dtos;
         }
 
         public async Task<CargoEstadiaDTO> AddCargoAsync(int idEstadia, CargoEstadiaDTO cargoDto, CancellationToken ct = default)
@@ -92,6 +117,19 @@ namespace Servicio.Hotel.Business.Services.Hospedaje
 
         public async Task AnularCargoAsync(int idCargo, string usuario, CancellationToken ct = default)
         {
+            var cargo = await _estadiaDataService.GetCargoByIdAsync(idCargo, ct);
+            if (cargo == null)
+                throw new NotFoundException($"No se encontró el cargo de estadía con ID {idCargo}.");
+
+            if (cargo.EstadoCargo == "ANU")
+                throw new ConflictException("El cargo ya está anulado.");
+
+            if (cargo.EstadoCargo == "FAC")
+                throw new ConflictException("No se puede anular un cargo ya facturado.");
+
+            if (cargo.EstadoCargo != "PEN")
+                throw new ConflictException($"No se puede anular un cargo en estado '{cargo.EstadoCargo}'.");
+
             await _estadiaDataService.AnularCargoAsync(idCargo, usuario, ct);
         }
 

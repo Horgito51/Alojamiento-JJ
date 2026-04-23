@@ -121,10 +121,22 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
 
         public async Task UpdateEstadoAsync(int id, string nuevoEstado, string usuario, CancellationToken ct = default)
         {
+            var estadoNormalizado = (nuevoEstado ?? string.Empty).Trim().ToUpperInvariant();
+            var estadosValidos = new[] { "DIS", "OCU", "MNT", "FDS", "INA" };
+            if (string.IsNullOrWhiteSpace(estadoNormalizado) || !estadosValidos.Contains(estadoNormalizado))
+            {
+                var errors = new Dictionary<string, string[]>
+                {
+                    ["NuevoEstado"] = new[] { $"Estado inválido. Valores permitidos: {string.Join(", ", estadosValidos)}." }
+                };
+                throw new ValidationException("HAB-006", errors);
+            }
+
             var existing = await _habitacionDataService.GetByIdAsync(id, ct);
             if (existing == null)
                 throw new NotFoundException("HAB-005", $"No se encontró la habitación con ID {id}.");
-            await _habitacionDataService.UpdateEstadoAsync(id, nuevoEstado, usuario, ct);
+
+            await _habitacionDataService.UpdateEstadoAsync(id, estadoNormalizado, usuario, ct);
         }
     }
 }

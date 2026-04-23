@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.DataAccess.Context;
@@ -55,6 +56,14 @@ namespace Servicio.Hotel.DataAccess.Repositories.Hospedaje
         {
             var sql = "EXEC booking.SP_HACER_CHECKIN @id_reserva = {0}, @usuario = {1}";
             return await _context.Database.ExecuteSqlRawAsync(sql, idReserva, usuario, ct);
+        }
+
+        public async Task<IEnumerable<EstadiaEntity>> GetByReservaAsync(int idReserva, CancellationToken ct = default)
+        {
+            return await (from e in _context.Estadias
+                          join rh in _context.ReservasHabitaciones on e.IdReservaHabitacion equals rh.IdReservaHabitacion
+                          where rh.IdReserva == idReserva
+                          select e).ToListAsync(ct);
         }
     }
 }

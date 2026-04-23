@@ -2,7 +2,11 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Servicio.Hotel.DataAccess.Context;
+using Servicio.Hotel.DataAccess.Repositories.Interfaces.Alojamiento;
 using Servicio.Hotel.DataAccess.Repositories.Interfaces.Reservas;
+using Servicio.Hotel.DataManagement.Exceptions;
 using Servicio.Hotel.DataManagement.Reservas.Interfaces;
 using Servicio.Hotel.DataManagement.Reservas.Models;
 using Servicio.Hotel.DataManagement.Reservas.Mappers;
@@ -15,12 +19,24 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
     {
         private readonly IReservaRepository _reservaRepository;
         private readonly IReservaHabitacionRepository _reservaHabitacionRepository;
+        private readonly IHabitacionRepository _habitacionRepository;
+        private readonly ITarifaRepository _tarifaRepository;
+        private readonly ServicioHotelDbContext _context;
         private readonly IUnitOfWork _unitOfWork;
 
-        public ReservaDataService(IReservaRepository reservaRepository, IReservaHabitacionRepository reservaHabitacionRepository, IUnitOfWork unitOfWork)
+        public ReservaDataService(
+            IReservaRepository reservaRepository,
+            IReservaHabitacionRepository reservaHabitacionRepository,
+            IHabitacionRepository habitacionRepository,
+            ITarifaRepository tarifaRepository,
+            ServicioHotelDbContext context,
+            IUnitOfWork unitOfWork)
         {
             _reservaRepository = reservaRepository;
             _reservaHabitacionRepository = reservaHabitacionRepository;
+            _habitacionRepository = habitacionRepository;
+            _tarifaRepository = tarifaRepository;
+            _context = context;
             _unitOfWork = unitOfWork;
         }
 
@@ -77,27 +93,105 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
 
         public async Task<ReservaDataModel> AddAsync(ReservaDataModel model, CancellationToken ct = default)
         {
-            var entity = model.ToEntity();
-            if (entity.GuidReserva == Guid.Empty) entity.GuidReserva = Guid.NewGuid();
-            if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
-            if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "reservas-service";
-            if (string.IsNullOrWhiteSpace(entity.CodigoReserva))
-                entity.CodigoReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-            entity.FechaRegistroUtc = DateTime.UtcNow;
-            entity.FechaReservaUtc = DateTime.UtcNow;
-            if (entity.ReservasHabitaciones != null)
+            if (model == null) throw new ArgumentNullException(nameof(model));
+
+            var requestedRooms = model.Habitaciones?.ToList() ?? new();
+            if (requestedRooms.Count == 0)
+                throw new DomainException("La reserva debe incluir al menos una habitacion.");
+
+            int createdReservaId = 0;
+
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                foreach (var rh in entity.ReservasHabitaciones)
+                // 1) Insertar cabecera sin detalles
+                var entity = model.ToEntity();
+                entity.ReservasHabitaciones = new System.Collections.Generic.List<Servicio.Hotel.DataAccess.Entities.Reservas.ReservaHabitacionEntity>();
+
+                if (entity.GuidReserva == Guid.Empty) entity.GuidReserva = Guid.NewGuid();
+                if (string.IsNullOrWhiteSpace(entity.CreadoPorUsuario)) entity.CreadoPorUsuario = "Sistema";
+                if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "reservas-service";
+                if (string.IsNullOrWhiteSpace(entity.CodigoReserva))
+                    entity.CodigoReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+                entity.FechaRegistroUtc = DateTime.UtcNow;
+                entity.FechaReservaUtc = DateTime.UtcNow;
+
+                var addedHeader = await _reservaRepository.AddAsync(entity, ct);
+                // 3) Recalcular totales de cabecera en base a lo insertado por SP
+                //    (SP_CONFIRMAR_RESERVA_HABITACION calcula montos por línea, pero no actualiza booking.RESERVAS)
+                var totales = await _context.ReservasHabitaciones
+                    .Where(rh => rh.IdReserva == createdReservaId)
+                    .GroupBy(_ => 1)
+                    .Select(g => new
+                    {
+                        Subtotal = g.Sum(x => x.SubtotalLinea),
+                        Iva = g.Sum(x => x.ValorIvaLinea),
+                        Total = g.Sum(x => x.TotalLinea)
+                    })
+                    .FirstOrDefaultAsync(ct);
+
+                if (totales == null)
+                    throw new InvalidOperationException("No se generaron detalles de reserva; no se pueden calcular totales.");
+
+                var descuento = addedHeader.DescuentoAplicado;
+                if (descuento < 0) descuento = 0;
+
+                addedHeader.SubtotalReserva = totales.Subtotal;
+                addedHeader.ValorIva = totales.Iva;
+                addedHeader.TotalReserva = Math.Max(0, totales.Total - descuento);
+                addedHeader.SaldoPendiente = addedHeader.TotalReserva;
+                addedHeader.ModificadoPorUsuario = string.IsNullOrWhiteSpace(model.CreadoPorUsuario) ? "Sistema" : model.CreadoPorUsuario;
+                addedHeader.FechaModificacionUtc = DateTime.UtcNow;
+
+                await _unitOfWork.SaveChangesAsync(ct);
+                createdReservaId = addedHeader.IdReserva;
+
+                // 2) Insertar detalles vía SP_CONFIRMAR_RESERVA_HABITACION (calcula montos y precio_noche_aplicado)
+                foreach (var room in requestedRooms)
                 {
-                    if (rh.ReservaHabitacionGuid == Guid.Empty) rh.ReservaHabitacionGuid = Guid.NewGuid();
-                    if (string.IsNullOrWhiteSpace(rh.CreadoPorUsuario)) rh.CreadoPorUsuario = "Sistema";
-                    if (string.IsNullOrWhiteSpace(rh.ServicioOrigen)) rh.ServicioOrigen = "reservas-service";
-                    rh.FechaRegistroUtc = DateTime.UtcNow;
+                    if (room.IdHabitacion <= 0)
+                        throw new DomainException("Cada habitacion debe incluir un IdHabitacion valido.");
+
+                    var habitacion = await _habitacionRepository.GetByIdAsync(room.IdHabitacion, ct);
+                    if (habitacion == null)
+                        throw new DomainException($"La habitacion {room.IdHabitacion} no existe.");
+
+                    var tarifa = await _tarifaRepository.GetTarifaVigenteRangoAsync(
+                        habitacion.IdSucursal,
+                        habitacion.IdTipoHabitacion,
+                        model.FechaInicio,
+                        model.FechaFin,
+                        ct);
+
+                    if (tarifa == null)
+                        throw new DomainException($"No existe tarifa vigente para la habitación {room.IdHabitacion} en el rango de fechas indicado.");
+
+                    var numAdultos = room.NumAdultos > 0 ? room.NumAdultos : 1;
+                    var numNinos = room.NumNinos >= 0 ? room.NumNinos : 0;
+
+                    await _reservaRepository.ConfirmarReservaHabitacionAsync(
+                        createdReservaId,
+                        room.IdHabitacion,
+                        tarifa.IdTarifa,
+                        model.FechaInicio,
+                        model.FechaFin,
+                        numAdultos,
+                        numNinos,
+                        tarifa.PrecioPorNoche,
+                        string.IsNullOrWhiteSpace(model.CreadoPorUsuario) ? "Sistema" : model.CreadoPorUsuario,
+                        ct);
                 }
-            }
-            var added = await _reservaRepository.AddAsync(entity, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
-            return added.ToModel();
+
+                await _unitOfWork.SaveChangesAsync(ct);
+
+                // Limpiar tracking para poder reconsultar lo insertado vía SP
+                _context.ChangeTracker.Clear();
+            }, ct);
+
+            var refreshed = await _reservaRepository.GetByIdAsync(createdReservaId, ct);
+            if (refreshed == null)
+                throw new InvalidOperationException("No se pudo recargar la reserva creada.");
+
+            return refreshed.ToModel();
         }
 
         public async Task UpdateAsync(ReservaDataModel model, CancellationToken ct = default)
@@ -156,6 +250,11 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
             var result = await _reservaRepository.ConfirmarReservaHabitacionAsync(idReserva, idHabitacion, idTarifa, fechaInicio, fechaFin, numAdultos, numNinos, precioNoche, usuario, ct);
             await _unitOfWork.SaveChangesAsync(ct);
             return result;
+        }
+
+        public async Task<bool> ExisteSolapamientoAsync(int idHabitacion, DateTime fechaInicio, DateTime fechaFin, int? excludeIdReserva = null, CancellationToken ct = default)
+        {
+            return await _reservaHabitacionRepository.ExistsSolapamientoAsync(idHabitacion, fechaInicio, fechaFin, excludeIdReserva, ct);
         }
     }
 }

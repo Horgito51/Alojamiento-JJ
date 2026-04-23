@@ -49,6 +49,8 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Mappers
                 Correo = model.Correo,
                 Nombres = model.Nombres,
                 Apellidos = model.Apellidos,
+                PasswordHash = model.PasswordHash ?? string.Empty,
+                PasswordSalt = model.PasswordSalt ?? string.Empty,
                 EstadoUsuario = model.EstadoUsuario,
                 EsEliminado = model.EsEliminado,
                 Activo = model.Activo,

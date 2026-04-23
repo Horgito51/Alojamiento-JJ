@@ -22,5 +22,8 @@ namespace Servicio.Hotel.DataAccess.Repositories.Interfaces.Hospedaje
 
         // Método para check-in (ejecuta SP)
         Task<int> HacerCheckinAsync(int idReserva, string usuario, CancellationToken ct = default);
+
+        // Consultas auxiliares
+        Task<IEnumerable<EstadiaEntity>> GetByReservaAsync(int idReserva, CancellationToken ct = default);
     }
 }

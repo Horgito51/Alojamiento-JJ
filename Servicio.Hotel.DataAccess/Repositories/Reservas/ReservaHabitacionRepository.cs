@@ -42,5 +42,21 @@ namespace Servicio.Hotel.DataAccess.Repositories.Reservas
                 await UpdateAsync(detalle, ct);
             }
         }
+
+        public async Task<bool> ExistsSolapamientoAsync(int idHabitacion, DateTime fechaInicio, DateTime fechaFin, int? excludeIdReserva = null, CancellationToken ct = default)
+        {
+            // Solapamiento cuando: inicio < fin2 && inicio2 < fin
+            return await _dbSet.AnyAsync(rh =>
+                rh.IdHabitacion == idHabitacion
+                && (!excludeIdReserva.HasValue || rh.IdReserva != excludeIdReserva.Value)
+                && rh.Reserva != null
+                // Alineado con SP_CONFIRMAR_RESERVA_HABITACION: bloquea mientras la reserva/linea no esté cancelada
+                // y la reserva no esté expirada.
+                && rh.Reserva.EstadoReserva != "CAN"
+                && rh.Reserva.EstadoReserva != "EXP"
+                && rh.EstadoDetalle != "CAN"
+                && rh.FechaInicio < fechaFin
+                && fechaInicio < rh.FechaFin, ct);
+        }
     }
 }

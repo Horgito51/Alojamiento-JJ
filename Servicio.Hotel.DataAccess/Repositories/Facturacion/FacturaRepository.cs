@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.DataAccess.Context;
@@ -63,8 +64,12 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
         // Estos métodos ejecutan los stored procedures que ya tienes en la base de datos.
         // Ajusta los nombres de los SP según lo que tengas.
 
-        public async Task<int> GenerarFacturaReservaAsync(int idReserva, string usuario, CancellationToken ct = default)
+public async Task<int> GenerarFacturaReservaAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
+            var reserva = await _context.Reservas.AsNoTracking().FirstOrDefaultAsync(r => r.IdReserva == idReserva, ct);
+            if (reserva == null)
+                throw new KeyNotFoundException();
+
             var sql = "EXEC booking.SP_GENERAR_FACTURA_RESERVA @id_reserva = {0}, @usuario = {1}";
             var result = await _context.Database.SqlQueryRaw<int?>(sql, idReserva, usuario).ToListAsync(ct);
             return result.FirstOrDefault() ?? 0;

@@ -2,6 +2,7 @@ using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Hospedaje;
 using Servicio.Hotel.DataManagement.Common;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,7 +17,7 @@ namespace Servicio.Hotel.Business.Interfaces.Hospedaje
         Task UpdateAsync(EstadiaDTO estadiaDto, CancellationToken ct = default);
 
         Task RegistrarCheckoutAsync(int idEstadia, string observaciones, bool requiereMantenimiento, string usuario, CancellationToken ct = default);
-        Task<int> HacerCheckinAsync(int idReserva, string usuario, CancellationToken ct = default);
+        Task<IEnumerable<EstadiaDTO>> HacerCheckinAsync(int idReserva, string usuario, CancellationToken ct = default);
 
         // Cargos de estadía
         Task<CargoEstadiaDTO> AddCargoAsync(int idEstadia, CargoEstadiaDTO cargoDto, CancellationToken ct = default);

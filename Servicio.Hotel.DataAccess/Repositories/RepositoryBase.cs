@@ -21,7 +21,13 @@ namespace Servicio.Hotel.DataAccess.Repositories
 
         public virtual async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
         {
-            return await _dbSet.FindAsync(new object[] { id }, ct);
+            var entity = await _dbSet.FindAsync(new object[] { id }, ct);
+            if (entity != null)
+            {
+                // Evita conflictos de tracking cuando se hace "Get + Update" con instancias distintas
+                _context.Entry(entity).State = EntityState.Detached;
+            }
+            return entity;
         }
 
         public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)

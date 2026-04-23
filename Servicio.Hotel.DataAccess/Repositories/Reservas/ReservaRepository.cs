@@ -15,7 +15,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Reservas
         public ReservaRepository(ServicioHotelDbContext context) : base(context) { }
 
         public async Task<ReservaEntity?> GetByIdAsync(int id, CancellationToken ct = default)
-            => await base.GetByIdAsync(id, ct);
+            => await _dbSet.Include(r => r.ReservasHabitaciones).FirstOrDefaultAsync(r => r.IdReserva == id, ct);
 
         public async Task<IEnumerable<ReservaEntity>> GetAllAsync(CancellationToken ct = default)
             => await base.GetAllAsync(ct);
@@ -30,10 +30,10 @@ namespace Servicio.Hotel.DataAccess.Repositories.Reservas
             => await base.DeleteAsync(id, ct);
 
         public async Task<ReservaEntity?> GetByGuidAsync(Guid guid, CancellationToken ct = default)
-            => await _dbSet.FirstOrDefaultAsync(r => r.GuidReserva == guid, ct);
+            => await _dbSet.Include(r => r.ReservasHabitaciones).FirstOrDefaultAsync(r => r.GuidReserva == guid, ct);
 
         public async Task<ReservaEntity?> GetByCodigoAsync(string codigo, CancellationToken ct = default)
-            => await _dbSet.FirstOrDefaultAsync(r => r.CodigoReserva == codigo, ct);
+            => await _dbSet.Include(r => r.ReservasHabitaciones).FirstOrDefaultAsync(r => r.CodigoReserva == codigo, ct);
 
         public async Task ConfirmarAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
@@ -44,6 +44,16 @@ namespace Servicio.Hotel.DataAccess.Repositories.Reservas
                 reserva.FechaConfirmacionUtc = DateTime.UtcNow;
                 reserva.ModificadoPorUsuario = usuario;
                 reserva.FechaModificacionUtc = DateTime.UtcNow;
+
+                if (reserva.ReservasHabitaciones != null)
+                {
+                    foreach (var detalle in reserva.ReservasHabitaciones)
+                    {
+                        detalle.EstadoDetalle = "CON";
+                        detalle.ModificadoPorUsuario = usuario;
+                        detalle.FechaModificacionUtc = DateTime.UtcNow;
+                    }
+                }
                 await UpdateAsync(reserva, ct);
             }
         }
@@ -58,6 +68,16 @@ namespace Servicio.Hotel.DataAccess.Repositories.Reservas
                 reserva.MotivoCancelacion = motivo;
                 reserva.ModificadoPorUsuario = usuario;
                 reserva.FechaModificacionUtc = DateTime.UtcNow;
+
+                if (reserva.ReservasHabitaciones != null)
+                {
+                    foreach (var detalle in reserva.ReservasHabitaciones)
+                    {
+                        detalle.EstadoDetalle = "CAN";
+                        detalle.ModificadoPorUsuario = usuario;
+                        detalle.FechaModificacionUtc = DateTime.UtcNow;
+                    }
+                }
                 await UpdateAsync(reserva, ct);
             }
         }

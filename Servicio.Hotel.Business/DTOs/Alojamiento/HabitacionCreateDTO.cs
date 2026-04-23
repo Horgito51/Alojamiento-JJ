@@ -11,6 +11,6 @@ namespace Servicio.Hotel.Business.DTOs.Alojamiento
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
         public string? DescripcionHabitacion { get; set; }
-        public string EstadoHabitacion { get; set; } = "ACT";
+        public string EstadoHabitacion { get; set; } = "DIS";
     }
 }

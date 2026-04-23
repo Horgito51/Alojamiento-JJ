@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -92,6 +93,17 @@ namespace Servicio.Hotel.Business.Services.Facturacion
 
         public async Task<int> GenerarFacturaReservaAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
+            var filtro = new FacturaFiltroDTO
+            {
+                IdReserva = idReserva,
+                TipoFactura = "RESERVA",
+                EsEliminado = false
+            };
+
+            var existentes = await _facturaDataService.GetByFiltroAsync(filtro.ToDataModel(), 1, int.MaxValue, ct);
+            if (existentes.Items != null && existentes.Items.Any(f => f.TipoFactura == "RESERVA" && f.Estado != "ANU" && !f.EsEliminado))
+                throw new ConflictException("Ya existe una factura generada para esta reserva.");
+
             return await _facturaDataService.GenerarFacturaReservaAsync(idReserva, usuario, ct);
         }
 
