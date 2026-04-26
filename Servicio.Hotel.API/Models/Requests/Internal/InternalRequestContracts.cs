@@ -112,8 +112,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string? Observaciones { get; set; }
         public bool EsWalkin { get; set; }
 
-        [JsonConverter(typeof(ReservaHabitacionIdListJsonConverter))]
-        public List<ReservaHabitacionIdRequest> Habitaciones { get; set; } = new();
+        public List<ReservaHabitacionCreateRequest> Habitaciones { get; set; } = new();
     }
 
     public class ReservaHabitacionIdRequest
@@ -448,17 +447,17 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Habitaciones = request.Habitaciones.Select(h => new Servicio.Hotel.Business.DTOs.Reservas.ReservaHabitacionDTO
                 {
                     IdHabitacion = h.IdHabitacion,
-                    FechaInicio = request.FechaInicio,
-                    FechaFin = request.FechaFin,
-                    NumAdultos = 1,
-                    NumNinos = 0,
-                    IdTarifa = null,
-                    PrecioNocheAplicado = 0,
-                    SubtotalLinea = 0,
-                    ValorIvaLinea = 0,
-                    DescuentoLinea = 0,
-                    TotalLinea = 0,
-                    EstadoDetalle = "PEN"
+                    FechaInicio = h.FechaInicio,
+                    FechaFin = h.FechaFin,
+                    NumAdultos = h.NumAdultos,
+                    NumNinos = h.NumNinos,
+                    IdTarifa = h.IdTarifa,
+                    PrecioNocheAplicado = h.PrecioNocheAplicado,
+                    SubtotalLinea = h.SubtotalLinea,
+                    ValorIvaLinea = h.ValorIvaLinea,
+                    DescuentoLinea = h.DescuentoLinea,
+                    TotalLinea = h.TotalLinea,
+                    EstadoDetalle = h.EstadoDetalle
                 }).ToList()
             };
 

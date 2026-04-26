@@ -21,6 +21,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
         private readonly IReservaHabitacionRepository _reservaHabitacionRepository;
         private readonly IHabitacionRepository _habitacionRepository;
         private readonly ITarifaRepository _tarifaRepository;
+        private readonly IClienteRepository _clienteRepository;
+        private readonly ISucursalRepository _sucursalRepository;
         private readonly ServicioHotelDbContext _context;
         private readonly IUnitOfWork _unitOfWork;
 
@@ -29,6 +31,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
             IReservaHabitacionRepository reservaHabitacionRepository,
             IHabitacionRepository habitacionRepository,
             ITarifaRepository tarifaRepository,
+            IClienteRepository clienteRepository,
+            ISucursalRepository sucursalRepository,
             ServicioHotelDbContext context,
             IUnitOfWork unitOfWork)
         {
@@ -36,6 +40,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
             _reservaHabitacionRepository = reservaHabitacionRepository;
             _habitacionRepository = habitacionRepository;
             _tarifaRepository = tarifaRepository;
+            _clienteRepository = clienteRepository;
+            _sucursalRepository = sucursalRepository;
             _context = context;
             _unitOfWork = unitOfWork;
         }
@@ -98,6 +104,14 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
             var requestedRooms = model.Habitaciones?.ToList() ?? new();
             if (requestedRooms.Count == 0)
                 throw new DomainException("La reserva debe incluir al menos una habitacion.");
+
+            var cliente = await _clienteRepository.GetByIdAsync(model.IdCliente, ct);
+            if (cliente == null)
+                throw new DomainException($"El cliente con ID {model.IdCliente} no existe.");
+
+            var sucursal = await _sucursalRepository.GetByIdAsync(model.IdSucursal, ct);
+            if (sucursal == null)
+                throw new DomainException($"La sucursal con ID {model.IdSucursal} no existe.");
 
             int createdReservaId = 0;
 
