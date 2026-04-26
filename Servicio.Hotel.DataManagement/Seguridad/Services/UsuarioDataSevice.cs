@@ -100,6 +100,12 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
             return entity?.ToCredentialsModel();
         }
 
+        public async Task<UsuarioCredencialesDataModel?> GetCredentialsByCorreoAsync(string correo, CancellationToken ct = default)
+        {
+            var entity = await _usuarioRepository.GetByCorreoAsync(correo, ct);
+            return entity?.ToCredentialsModel();
+        }
+
         public async Task<UsuarioCredencialesDataModel?> GetCredentialsByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _usuarioRepository.GetByIdAsync(id, ct);

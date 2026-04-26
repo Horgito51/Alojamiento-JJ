@@ -33,15 +33,21 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         {
             LoginValidator.Validate(loginRequest);
 
-            var credenciales = await _usuarioDataService.GetCredentialsByUsernameAsync(loginRequest.Username, ct);
-            if (credenciales == null)
+            var loginKey = loginRequest.Username.Trim();
+
+            var credenciales = await _usuarioDataService.GetCredentialsByUsernameAsync(loginKey, ct);
+            var usuario = await _usuarioDataService.GetByUsernameAsync(loginKey, ct);
+
+            if (credenciales == null || usuario == null)
+            {
+                credenciales = await _usuarioDataService.GetCredentialsByCorreoAsync(loginKey, ct);
+                usuario = await _usuarioDataService.GetByCorreoAsync(loginKey, ct);
+            }
+
+            if (credenciales == null || usuario == null)
                 throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
 
             if (!PasswordHasher.Verify(loginRequest.Password, credenciales.PasswordHash, credenciales.PasswordSalt))
-                throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
-
-            var usuario = await _usuarioDataService.GetByUsernameAsync(loginRequest.Username, ct);
-            if (usuario == null)
                 throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
 
             var roles = usuario.Roles?.Select(r => r.NombreRol).ToList() ?? new List<string>();

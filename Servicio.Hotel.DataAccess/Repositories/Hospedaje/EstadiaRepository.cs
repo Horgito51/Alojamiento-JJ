@@ -54,8 +54,11 @@ namespace Servicio.Hotel.DataAccess.Repositories.Hospedaje
         }
         public async Task<int> HacerCheckinAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
-            var sql = "EXEC booking.SP_HACER_CHECKIN @id_reserva = {0}, @usuario = {1}";
-            return await _context.Database.ExecuteSqlRawAsync(sql, idReserva, usuario, ct);
+            // IMPORTANT: pass CancellationToken via the proper overload.
+            // Otherwise `ct` is treated as a SQL parameter value and EF tries to map it (fails for CancellationToken).
+            return await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"EXEC booking.SP_HACER_CHECKIN @id_reserva = {idReserva}, @usuario = {usuario}",
+                ct);
         }
 
         public async Task<IEnumerable<EstadiaEntity>> GetByReservaAsync(int idReserva, CancellationToken ct = default)

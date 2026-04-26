@@ -14,9 +14,9 @@ namespace Servicio.Hotel.Business.Validators.Seguridad
             var errors = new Dictionary<string, string[]>();
 
             if (string.IsNullOrWhiteSpace(loginRequest.Username))
-                errors["Username"] = new[] { "El nombre de usuario es obligatorio." };
+                errors["Username"] = new[] { "El nombre de usuario o correo es obligatorio." };
             else if (loginRequest.Username.Length > 50)
-                errors["Username"] = new[] { "El nombre de usuario no puede exceder 50 caracteres." };
+                errors["Username"] = new[] { "El nombre de usuario o correo no puede exceder 50 caracteres." };
 
             if (string.IsNullOrWhiteSpace(loginRequest.Password))
                 errors["Password"] = new[] { "La contraseña es obligatoria." };
