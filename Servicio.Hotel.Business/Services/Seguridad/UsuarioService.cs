@@ -57,6 +57,8 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 throw new ValidationException("USR-003", "El nombre de usuario es obligatorio.");
             if (string.IsNullOrWhiteSpace(usuarioCreateDto.Correo))
                 throw new ValidationException("USR-004", "El correo es obligatorio.");
+            if (string.IsNullOrWhiteSpace(usuarioCreateDto.Password) || usuarioCreateDto.Password.Length < 10)
+                throw new ValidationException("USR-013", "La contraseña es obligatoria y debe tener al menos 10 caracteres.");
             if (string.IsNullOrWhiteSpace(usuarioCreateDto.Nombres))
                 throw new ValidationException("USR-012", "Los nombres son obligatorios.");
 
@@ -114,7 +116,7 @@ if (usuarioCreateDto.IdRol.HasValue && (usuarioCreateDto.Roles == null || usuari
             if (usuarioCreateDto.Roles == null || usuarioCreateDto.Roles.Count == 0)
                 throw new ValidationException("USR-011", "El usuario debe tener al menos un rol.");
 
-            var (hash, salt) = PasswordHasher.HashPassword("HotelJJ123!");
+            var (hash, salt) = PasswordHasher.HashPassword(usuarioCreateDto.Password);
 
             var dataModel = new Servicio.Hotel.DataManagement.Seguridad.Models.UsuarioDataModel
             {
@@ -188,9 +190,11 @@ if (usuarioCreateDto.IdRol.HasValue && (usuarioCreateDto.Roles == null || usuari
             var existing = await _usuarioDataService.GetByIdAsync(id, ct);
             if (existing == null)
                 throw new NotFoundException("USR-010", $"No se encontró el usuario con ID {id}.");
-            // Aquí se debería hashear la contraseña antes de enviar a DataService
-            // Por simplicidad, asumimos que el DataService recibe el hash y omitimos el salt
-            await _usuarioDataService.CambiarPasswordAsync(id, newPassword, string.Empty, usuario, ct);
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 10)
+                throw new ValidationException("USR-014", "La nueva contraseña debe tener al menos 10 caracteres.");
+
+            var (hash, salt) = PasswordHasher.HashPassword(newPassword);
+            await _usuarioDataService.CambiarPasswordAsync(id, hash, salt, usuario, ct);
         }
 
         public async Task<bool> ExistsByUsernameAsync(string username, int? excludeId = null, CancellationToken ct = default)

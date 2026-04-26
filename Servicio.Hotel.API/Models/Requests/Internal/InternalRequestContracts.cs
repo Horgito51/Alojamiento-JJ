@@ -32,6 +32,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public int? IdCliente { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Correo { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
         public string Nombres { get; set; } = string.Empty;
         public string Apellidos { get; set; } = string.Empty;
         public string EstadoUsuario { get; set; } = "ACT";
@@ -359,6 +360,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 IdCliente = request.IdCliente,
                 Username = request.Username,
                 Correo = request.Correo,
+                Password = request.Password,
                 Nombres = request.Nombres,
                 Apellidos = request.Apellidos,
                 EstadoUsuario = request.EstadoUsuario,

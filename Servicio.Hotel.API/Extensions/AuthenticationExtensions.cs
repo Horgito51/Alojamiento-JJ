@@ -11,8 +11,11 @@ namespace Servicio.Hotel.API.Extensions
 {
     public static class AuthenticationExtensions
     {
-        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, JwtSettings jwtSettings)
+        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, JwtSettings jwtSettings, IWebHostEnvironment environment)
         {
+            if (string.IsNullOrWhiteSpace(jwtSettings.Secret) || jwtSettings.Secret.Length < 32)
+                throw new InvalidOperationException("La configuracion 'Jwt:Secret' debe tener al menos 32 caracteres.");
+
             var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
 
             services.AddAuthentication(options =>
@@ -22,8 +25,8 @@ namespace Servicio.Hotel.API.Extensions
             })
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
+                options.RequireHttpsMetadata = !environment.IsDevelopment();
+                options.SaveToken = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -44,8 +47,7 @@ namespace Servicio.Hotel.API.Extensions
                         var loggerFactory = context.HttpContext.RequestServices
                             .GetRequiredService<ILoggerFactory>();
                         var logger = loggerFactory.CreateLogger("JwtBearer");
-                        logger.LogError("JWT auth failed: {Error}", context.Exception.Message);
-                        context.Response.Headers["X-Auth-Error"] = context.Exception.Message;
+                        logger.LogWarning("JWT auth failed: {Error}", context.Exception.Message);
                         return Task.CompletedTask;
                     },
                     OnChallenge = context =>

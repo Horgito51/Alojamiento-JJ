@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 using System.Threading;
@@ -20,6 +22,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
 {
     public class AuthService : IAuthService
     {
+        private static readonly ConcurrentDictionary<string, DateTime> RevokedRefreshTokens = new();
         private readonly IUsuarioDataService _usuarioDataService;
         private readonly IConfiguration _configuration;
 
@@ -47,6 +50,9 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             if (credenciales == null || usuario == null)
                 throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
 
+            if (!usuario.Activo || usuario.EstadoUsuario != "ACT" || usuario.EsEliminado)
+                throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
+
             if (!PasswordHasher.Verify(loginRequest.Password, credenciales.PasswordHash, credenciales.PasswordSalt))
                 throw new UnauthorizedBusinessException("AUTH-001", "Usuario o contraseña incorrectos.");
 
@@ -72,9 +78,9 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         private string GenerarTokenJWT(UsuarioDataModel usuario, List<string> roles)
         {
             // Leer exactamente los mismos valores que usa AuthenticationExtensions
-            var secret   = _configuration["Jwt:Secret"]   ?? "MiClaveSuperSecretaParaJWT1234567890!";
-            var issuer   = _configuration["Jwt:Issuer"]   ?? "Microservicio.Clientes.API";
-            var audience = _configuration["Jwt:Audience"] ?? "Microservicio.Clientes.API";
+            var secret   = GetRequiredJwtSetting("Secret");
+            var issuer   = GetRequiredJwtSetting("Issuer");
+            var audience = GetRequiredJwtSetting("Audience");
             var expirationMinutes = int.TryParse(_configuration["Jwt:ExpirationMinutes"], out var mins) ? mins : 60;
 
             var key = Encoding.ASCII.GetBytes(secret);
@@ -110,9 +116,9 @@ namespace Servicio.Hotel.Business.Services.Seguridad
 
         private string GenerarRefreshTokenJWT(UsuarioDataModel usuario)
         {
-            var secret = _configuration["Jwt:Secret"] ?? "MiClaveSuperSecretaParaJWT1234567890!";
-            var issuer = _configuration["Jwt:Issuer"] ?? "Microservicio.Clientes.API";
-            var audience = _configuration["Jwt:Audience"] ?? "Microservicio.Clientes.API";
+            var secret = GetRequiredJwtSetting("Secret");
+            var issuer = GetRequiredJwtSetting("Issuer");
+            var audience = GetRequiredJwtSetting("Audience");
             var refreshDays = int.TryParse(_configuration["Jwt:RefreshExpirationDays"], out var days) ? days : 7;
 
             var key = Encoding.ASCII.GetBytes(secret);
@@ -142,11 +148,17 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         }
 
         public Task LogoutAsync(string refreshToken, CancellationToken ct = default)
-            => Task.CompletedTask;
+        {
+            RevokeRefreshToken(refreshToken);
+            return Task.CompletedTask;
+        }
 
         public async Task<LoginResponseDTO> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
+                throw new UnauthorizedBusinessException("AUTH-002", "Refresh token inválido.");
+
+            if (IsRefreshTokenRevoked(refreshToken))
                 throw new UnauthorizedBusinessException("AUTH-002", "Refresh token inválido.");
 
             var principal = ValidateJwt(refreshToken, out var tokenType);
@@ -161,9 +173,13 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             if (usuario == null)
                 throw new UnauthorizedBusinessException("AUTH-002", "Refresh token inválido.");
 
+            if (!usuario.Activo || usuario.EstadoUsuario != "ACT" || usuario.EsEliminado)
+                throw new UnauthorizedBusinessException("AUTH-002", "Refresh token inválido.");
+
             var roles = usuario.Roles?.Select(r => r.NombreRol).ToList() ?? new List<string>();
             var token = GenerarTokenJWT(usuario, roles);
             var newRefresh = GenerarRefreshTokenJWT(usuario);
+            RevokeRefreshToken(refreshToken);
             var expirationMinutes = int.TryParse(_configuration["Jwt:ExpirationMinutes"], out var mins) ? mins : 60;
 
             return new LoginResponseDTO
@@ -184,6 +200,9 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(passwordNuevo))
                 throw new ValidationException("AUTH-003", "password_actual y password_nuevo son obligatorios.");
 
+            if (passwordNuevo.Length < 10)
+                throw new ValidationException("AUTH-006", "La nueva contraseña debe tener al menos 10 caracteres.");
+
             var cred = await _usuarioDataService.GetCredentialsByIdAsync(idUsuario, ct);
             if (cred == null)
                 throw new NotFoundException("AUTH-004", "Usuario no encontrado.");
@@ -198,9 +217,9 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         private ClaimsPrincipal? ValidateJwt(string token, out string? tokenType)
         {
             tokenType = null;
-            var secret = _configuration["Jwt:Secret"] ?? "MiClaveSuperSecretaParaJWT1234567890!";
-            var issuer = _configuration["Jwt:Issuer"] ?? "Microservicio.Clientes.API";
-            var audience = _configuration["Jwt:Audience"] ?? "Microservicio.Clientes.API";
+            var secret = GetRequiredJwtSetting("Secret");
+            var issuer = GetRequiredJwtSetting("Issuer");
+            var audience = GetRequiredJwtSetting("Audience");
 
             var key = Encoding.ASCII.GetBytes(secret);
             var handler = new JwtSecurityTokenHandler();
@@ -229,6 +248,66 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         }
 
         public Task<bool> ValidateTokenAsync(string token, CancellationToken ct = default)
-            => Task.FromResult(true);
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return Task.FromResult(false);
+
+            var principal = ValidateJwt(token, out var tokenType);
+            return Task.FromResult(principal != null && tokenType != "refresh");
+        }
+
+        private string GetRequiredJwtSetting(string name)
+        {
+            var value = _configuration[$"Jwt:{name}"];
+            if (string.IsNullOrWhiteSpace(value))
+                throw new InvalidOperationException($"La configuracion 'Jwt:{name}' es obligatoria.");
+
+            return value;
+        }
+
+        private static void RevokeRefreshToken(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return;
+
+            var expiresUtc = GetTokenExpirationUtc(refreshToken) ?? DateTime.UtcNow.AddDays(7);
+            RevokedRefreshTokens[HashToken(refreshToken)] = expiresUtc;
+            CleanupRevokedRefreshTokens();
+        }
+
+        private static bool IsRefreshTokenRevoked(string refreshToken)
+        {
+            CleanupRevokedRefreshTokens();
+            return RevokedRefreshTokens.ContainsKey(HashToken(refreshToken));
+        }
+
+        private static DateTime? GetTokenExpirationUtc(string token)
+        {
+            try
+            {
+                var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                return jwt.ValidTo == DateTime.MinValue ? null : jwt.ValidTo;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string HashToken(string token)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+            return Convert.ToHexString(bytes);
+        }
+
+        private static void CleanupRevokedRefreshTokens()
+        {
+            var now = DateTime.UtcNow;
+            foreach (var item in RevokedRefreshTokens)
+            {
+                if (item.Value <= now)
+                    RevokedRefreshTokens.TryRemove(item.Key, out _);
+            }
+        }
     }
 }

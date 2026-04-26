@@ -6,7 +6,6 @@ namespace Servicio.Hotel.API.Models.Responses.Public
     {
         public Guid UsuarioGuid { get; set; }
         public string Username { get; set; } = string.Empty;
-        public string Correo { get; set; } = string.Empty;
         public string Nombres { get; set; } = string.Empty;
         public string Apellidos { get; set; } = string.Empty;
         public string EstadoUsuario { get; set; } = string.Empty;
@@ -78,4 +77,3 @@ namespace Servicio.Hotel.API.Models.Responses.Public
         public string TipoHabitacionSlug { get; set; } = string.Empty;
     }
 }
-

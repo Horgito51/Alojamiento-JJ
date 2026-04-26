@@ -11,6 +11,12 @@ var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (jwtSettings is not null &&
+    (string.IsNullOrWhiteSpace(jwtSettings.Secret) || jwtSettings.Secret.Length < 32))
+{
+    throw new InvalidOperationException("La configuracion 'Jwt:Secret' debe tener al menos 32 caracteres.");
+}
+
 if (jwtSettings is null)
 {
     throw new InvalidOperationException("La configuración 'Jwt' es obligatoria.");
@@ -33,7 +39,8 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 builder.Services.AddDataAccessServices(connectionString);
 
 // 3. Registrar autenticación JWT
-builder.Services.AddJwtAuthentication(jwtSettings);
+builder.Services.AddJwtAuthentication(jwtSettings, builder.Environment);
+builder.Services.AddCustomAuthorization();
 
 // 4. Registrar Swagger / OpenAPI
 builder.Services.AddSwaggerDocumentation();
@@ -73,6 +80,7 @@ else
 
 app.UseCors("AllowSpecificOrigins");
 app.UseAuthentication();
+app.UseMiddleware<AdminProfileAccessMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

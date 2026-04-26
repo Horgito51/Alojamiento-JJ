@@ -10,7 +10,6 @@ namespace Servicio.Hotel.API.Models.Responses.Public
         {
             UsuarioGuid = dto.UsuarioGuid,
             Username = dto.Username,
-            Correo = dto.Correo,
             Nombres = dto.Nombres,
             Apellidos = dto.Apellidos,
             EstadoUsuario = dto.EstadoUsuario,
@@ -69,4 +68,3 @@ namespace Servicio.Hotel.API.Models.Responses.Public
         };
     }
 }
-
