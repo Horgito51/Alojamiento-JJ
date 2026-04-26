@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Valoraciones;
 
@@ -11,8 +11,8 @@ namespace Servicio.Hotel.DataAccess.Configurations.Valoraciones
             builder.ToTable("VALORACIONES", "booking");
             builder.HasKey(e => e.IdValoracion);
 
-            builder.Property(e => e.IdValoracion).HasColumnName("id_valoracion");
-            builder.Property(e => e.ValoracionGuid).HasColumnName("valoracion_guid");
+            builder.Property(e => e.IdValoracion).HasColumnName("id_valoracion").ValueGeneratedOnAdd();
+            builder.Property(e => e.ValoracionGuid).HasColumnName("valoracion_guid").ValueGeneratedOnAdd();
             builder.Property(e => e.IdEstadia).HasColumnName("id_estadia");
             builder.Property(e => e.IdCliente).HasColumnName("id_cliente");
             builder.Property(e => e.IdSucursal).HasColumnName("id_sucursal");

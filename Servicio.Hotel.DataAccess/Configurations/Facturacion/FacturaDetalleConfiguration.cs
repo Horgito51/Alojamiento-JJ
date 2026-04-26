@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Facturacion;
 
@@ -11,8 +11,8 @@ namespace Servicio.Hotel.DataAccess.Configurations.Facturacion
             builder.ToTable("FACTURA_DETALLE", "booking");
             builder.HasKey(e => e.IdFacturaDetalle);
 
-            builder.Property(e => e.IdFacturaDetalle).HasColumnName("id_factura_detalle");
-            builder.Property(e => e.FacturaDetalleGuid).HasColumnName("factura_detalle_guid");
+            builder.Property(e => e.IdFacturaDetalle).HasColumnName("id_factura_detalle").ValueGeneratedOnAdd();
+            builder.Property(e => e.FacturaDetalleGuid).HasColumnName("factura_detalle_guid").ValueGeneratedOnAdd();
             builder.Property(e => e.IdFactura).HasColumnName("id_factura");
             builder.Property(e => e.TipoItem).HasColumnName("tipo_item").HasMaxLength(30);
             builder.Property(e => e.ReferenciaTipo).HasColumnName("referencia_tipo").HasMaxLength(30);

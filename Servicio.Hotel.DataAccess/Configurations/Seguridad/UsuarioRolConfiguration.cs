@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Seguridad;
 
@@ -11,7 +11,7 @@ namespace Servicio.Hotel.DataAccess.Configurations.Seguridad
             builder.ToTable("USUARIOS_ROLES", "seguridad");
             builder.HasKey(e => e.IdUsuarioRol);
 
-            builder.Property(e => e.IdUsuarioRol).HasColumnName("id_usuario_rol");
+            builder.Property(e => e.IdUsuarioRol).HasColumnName("id_usuario_rol").ValueGeneratedOnAdd();
             builder.Property(e => e.IdUsuario).HasColumnName("id_usuario");
             builder.Property(e => e.IdRol).HasColumnName("id_rol");
             builder.Property(e => e.EstadoUsuarioRol).HasColumnName("estado_usuario_rol").HasMaxLength(3);

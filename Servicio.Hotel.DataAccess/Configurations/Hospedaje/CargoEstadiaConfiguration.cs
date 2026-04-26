@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Hospedaje;
 
@@ -11,8 +11,8 @@ namespace Servicio.Hotel.DataAccess.Configurations.Hospedaje
             builder.ToTable("CARGO_ESTADIA", "booking");
             builder.HasKey(e => e.IdCargoEstadia);
 
-            builder.Property(e => e.IdCargoEstadia).HasColumnName("id_cargo_estadia");
-            builder.Property(e => e.CargoGuid).HasColumnName("cargo_guid");
+            builder.Property(e => e.IdCargoEstadia).HasColumnName("id_cargo_estadia").ValueGeneratedOnAdd();
+            builder.Property(e => e.CargoGuid).HasColumnName("cargo_guid").ValueGeneratedOnAdd();
             builder.Property(e => e.IdEstadia).HasColumnName("id_estadia");
             builder.Property(e => e.IdCatalogo).HasColumnName("id_catalogo");
             builder.Property(e => e.DescripcionCargo).HasColumnName("descripcion_cargo").HasMaxLength(250);

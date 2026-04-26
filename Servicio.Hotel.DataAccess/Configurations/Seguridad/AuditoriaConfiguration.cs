@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Seguridad;
 
@@ -11,8 +11,8 @@ namespace Servicio.Hotel.DataAccess.Configurations.Seguridad
             builder.ToTable("AUDITORIA", "seguridad");
             builder.HasKey(e => e.IdAuditoria);
 
-            builder.Property(e => e.IdAuditoria).HasColumnName("id_auditoria");
-            builder.Property(e => e.AuditoriaGuid).HasColumnName("auditoria_guid");
+            builder.Property(e => e.IdAuditoria).HasColumnName("id_auditoria").ValueGeneratedOnAdd();
+            builder.Property(e => e.AuditoriaGuid).HasColumnName("auditoria_guid").ValueGeneratedOnAdd();
             builder.Property(e => e.TablaAfectada).HasColumnName("tabla_afectada").HasMaxLength(100);
             builder.Property(e => e.Operacion).HasColumnName("operacion").HasMaxLength(10);
             builder.Property(e => e.IdRegistroAfectado).HasColumnName("id_registro_afectado").HasMaxLength(100);

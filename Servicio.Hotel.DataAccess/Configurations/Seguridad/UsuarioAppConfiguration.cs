@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Seguridad;
 
@@ -11,8 +11,8 @@ namespace Servicio.Hotel.DataAccess.Configurations.Seguridad
             builder.ToTable("USUARIO_APP", "seguridad");
             builder.HasKey(e => e.IdUsuario);
 
-            builder.Property(e => e.IdUsuario).HasColumnName("id_usuario");
-            builder.Property(e => e.UsuarioGuid).HasColumnName("usuario_guid");
+            builder.Property(e => e.IdUsuario).HasColumnName("id_usuario").ValueGeneratedOnAdd();
+            builder.Property(e => e.UsuarioGuid).HasColumnName("usuario_guid").ValueGeneratedOnAdd();
             builder.Property(e => e.IdCliente).HasColumnName("id_cliente");
             builder.Property(e => e.Username).HasColumnName("username").HasMaxLength(50);
             builder.Property(e => e.Correo).HasColumnName("correo").HasMaxLength(120);

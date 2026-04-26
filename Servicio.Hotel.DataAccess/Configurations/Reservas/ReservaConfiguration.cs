@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Reservas;
 
@@ -11,8 +11,8 @@ namespace Servicio.Hotel.DataAccess.Configurations.Reservas
             builder.ToTable("RESERVAS", "booking");
             builder.HasKey(e => e.IdReserva);
 
-            builder.Property(e => e.IdReserva).HasColumnName("id_reserva");
-            builder.Property(e => e.GuidReserva).HasColumnName("guid_reserva");
+            builder.Property(e => e.IdReserva).HasColumnName("id_reserva").ValueGeneratedOnAdd();
+            builder.Property(e => e.GuidReserva).HasColumnName("guid_reserva").ValueGeneratedOnAdd();
             builder.Property(e => e.CodigoReserva).HasColumnName("codigo_reserva").HasMaxLength(40);
             builder.Property(e => e.IdCliente).HasColumnName("id_cliente");
             builder.Property(e => e.IdSucursal).HasColumnName("id_sucursal");

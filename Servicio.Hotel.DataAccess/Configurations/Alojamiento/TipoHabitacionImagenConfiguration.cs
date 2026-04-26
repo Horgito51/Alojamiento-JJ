@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Servicio.Hotel.DataAccess.Entities.Alojamiento;
 
@@ -11,7 +11,7 @@ namespace Servicio.Hotel.DataAccess.Configurations.Alojamiento
             builder.ToTable("TIPO_HABITACION_IMAGEN", "booking");
             builder.HasKey(e => e.IdTipoHabitacionImagen);
 
-            builder.Property(e => e.IdTipoHabitacionImagen).HasColumnName("id_tipo_habitacion_imagen");
+            builder.Property(e => e.IdTipoHabitacionImagen).HasColumnName("id_tipo_habitacion_imagen").ValueGeneratedOnAdd();
             builder.Property(e => e.IdTipoHabitacion).HasColumnName("id_tipo_habitacion");
             builder.Property(e => e.UrlImagen).HasColumnName("url_imagen").HasMaxLength(500);
             builder.Property(e => e.DescripcionImagen).HasColumnName("descripcion_imagen").HasMaxLength(255);
