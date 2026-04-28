@@ -119,7 +119,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 };
                 if (detalle.Cantidad <= 0) detalle.Cantidad = 1;
 
-                await _context.FacturaDetalles.AddAsync(detalle, ct);
+                await _context.FacturasDetalle.AddAsync(detalle, ct);
             }
 
             await _context.SaveChangesAsync(ct);
@@ -177,7 +177,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 };
                 if (detalle.Cantidad <= 0) detalle.Cantidad = 1;
 
-                await _context.FacturaDetalles.AddAsync(detalle, ct);
+                await _context.FacturasDetalle.AddAsync(detalle, ct);
             }
 
             await _context.SaveChangesAsync(ct);
