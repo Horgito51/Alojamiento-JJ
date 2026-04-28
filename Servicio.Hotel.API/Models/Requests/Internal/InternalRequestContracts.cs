@@ -154,6 +154,14 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string Motivo { get; set; } = string.Empty;
     }
 
+    public class ReservaPrecioRequest
+    {
+        public int IdHabitacion { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public string? Canal { get; set; }
+    }
+
     public class HabitacionCreateRequest
     {
         public int IdSucursal { get; set; }

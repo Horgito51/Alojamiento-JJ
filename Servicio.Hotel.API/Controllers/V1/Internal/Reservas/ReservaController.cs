@@ -44,6 +44,19 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Reservas
             return CreatedAtAction(nameof(GetById), new { id = result.IdReserva }, result);
         }
 
+        [HttpPost("calcular-precio")]
+        public async Task<ActionResult<ReservaPrecioDTO>> CalcularPrecio([FromBody] ReservaPrecioRequest request)
+        {
+            var result = await _reservaService.CalcularPrecioHabitacionAsync(
+                request.IdHabitacion,
+                request.FechaInicio,
+                request.FechaFin,
+                request.Canal,
+                HttpContext.RequestAborted);
+
+            return Ok(result);
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ReservaUpdateRequest request)
         {

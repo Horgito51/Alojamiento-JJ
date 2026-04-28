@@ -21,7 +21,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
         private readonly IHabitacionService _habitacionService;
 
         public ReservaService(
-            IReservaDataService reservaDataService, 
+            IReservaDataService reservaDataService,
             ITarifaService tarifaService,
             IHabitacionService habitacionService)
         {
@@ -34,7 +34,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var dataModel = await _reservaDataService.GetByIdAsync(id, ct);
             if (dataModel == null)
-                throw new NotFoundException("RES-001", $"No se encontró la reserva con ID {id}.");
+                throw new NotFoundException("RES-001", $"No se encontro la reserva con ID {id}.");
             return dataModel.ToDto();
         }
 
@@ -42,7 +42,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var dataModel = await _reservaDataService.GetByGuidAsync(guid, ct);
             if (dataModel == null)
-                throw new NotFoundException("RES-002", $"No se encontró la reserva con GUID {guid}.");
+                throw new NotFoundException("RES-002", $"No se encontro la reserva con GUID {guid}.");
             return dataModel.ToDto();
         }
 
@@ -50,7 +50,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var dataModel = await _reservaDataService.GetByCodigoAsync(codigo, ct);
             if (dataModel == null)
-                throw new NotFoundException("RES-003", $"No se encontró la reserva con código {codigo}.");
+                throw new NotFoundException("RES-003", $"No se encontro la reserva con codigo {codigo}.");
             return dataModel.ToDto();
         }
 
@@ -68,34 +68,23 @@ namespace Servicio.Hotel.Business.Services.Reservas
 
         public async Task<ReservaDTO> CreateAsync(ReservaCreateDTO reservaCreateDto, CancellationToken ct = default)
         {
-            // Recalcular totales en el backend para mayor seguridad
             decimal subtotalTotal = 0;
-            var ivaRate = 0.12m;
+            const decimal ivaRate = 0.12m;
 
             foreach (var h in reservaCreateDto.Habitaciones)
             {
-                // Buscar la tarifa vigente para esta habitación
-                decimal precioNoche = 0;
-                try
-                {
-                    var tarifa = await _tarifaService.GetTarifaVigenteAsync(reservaCreateDto.IdSucursal, h.IdHabitacion, reservaCreateDto.FechaInicio, ct);
-                    precioNoche = tarifa.PrecioPorNoche;
-                    h.IdTarifa = tarifa.IdTarifa;
-                }
-                catch
-                {
-                    // Fallback al precio base de la habitación si no hay tarifa
-                    var habitacion = await _habitacionService.GetByIdAsync(h.IdHabitacion, ct);
-                    precioNoche = habitacion.PrecioBase;
-                }
+                var precio = await CalcularPrecioHabitacionAsync(
+                    h.IdHabitacion,
+                    h.FechaInicio == default ? reservaCreateDto.FechaInicio : h.FechaInicio,
+                    h.FechaFin == default ? reservaCreateDto.FechaFin : h.FechaFin,
+                    reservaCreateDto.OrigenCanalReserva,
+                    ct);
 
-                var noches = (int)(reservaCreateDto.FechaFin.Date - reservaCreateDto.FechaInicio.Date).TotalDays;
-                if (noches <= 0) noches = 1;
-
-                h.PrecioNocheAplicado = precioNoche;
-                h.SubtotalLinea = precioNoche * noches;
-                h.ValorIvaLinea = Math.Round(h.SubtotalLinea * ivaRate, 2);
-                h.TotalLinea = h.SubtotalLinea + h.ValorIvaLinea;
+                h.IdTarifa = precio.IdTarifa;
+                h.PrecioNocheAplicado = precio.PrecioNocheAplicado;
+                h.SubtotalLinea = precio.SubtotalLinea;
+                h.ValorIvaLinea = precio.ValorIvaLinea;
+                h.TotalLinea = precio.TotalLinea;
 
                 subtotalTotal += h.SubtotalLinea;
             }
@@ -129,6 +118,41 @@ namespace Servicio.Hotel.Business.Services.Reservas
             return created.ToDto();
         }
 
+        public async Task<ReservaPrecioDTO> CalcularPrecioHabitacionAsync(int idHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default)
+        {
+            if (fechaFin <= fechaInicio)
+                throw new ValidationException("RES-PRECIO-001", "La fecha de fin debe ser posterior a la fecha de inicio.");
+
+            var habitacion = await _habitacionService.GetByIdAsync(idHabitacion, ct);
+            var tarifa = await _tarifaService.GetTarifaVigenteRangoOrDefaultAsync(
+                habitacion.IdSucursal,
+                habitacion.IdTipoHabitacion,
+                fechaInicio,
+                fechaFin,
+                canal,
+                ct);
+
+            var noches = (int)(fechaFin.Date - fechaInicio.Date).TotalDays;
+            if (noches <= 0) noches = 1;
+
+            var precioNoche = tarifa?.PrecioPorNoche ?? habitacion.PrecioBase;
+            var subtotal = Math.Round(precioNoche * noches, 2);
+            var iva = Math.Round(subtotal * 0.12m, 2);
+
+            return new ReservaPrecioDTO
+            {
+                IdHabitacion = habitacion.IdHabitacion,
+                HabitacionGuid = habitacion.HabitacionGuid,
+                IdSucursal = habitacion.IdSucursal,
+                IdTarifa = tarifa?.IdTarifa,
+                PrecioNocheAplicado = precioNoche,
+                SubtotalLinea = subtotal,
+                ValorIvaLinea = iva,
+                TotalLinea = subtotal + iva,
+                OrigenPrecio = tarifa == null ? "PRECIO_BASE" : "TARIFA"
+            };
+        }
+
         public async Task UpdateAsync(ReservaUpdateDTO reservaUpdateDto, CancellationToken ct = default)
         {
             var reservaDto = new ReservaDTO
@@ -147,7 +171,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
 
             var existing = await _reservaDataService.GetByIdAsync(reservaUpdateDto.IdReserva, ct);
             if (existing == null)
-                throw new NotFoundException("RES-004", $"No se encontró la reserva con ID {reservaUpdateDto.IdReserva}.");
+                throw new NotFoundException("RES-004", $"No se encontro la reserva con ID {reservaUpdateDto.IdReserva}.");
 
             reservaDto.IdCliente = existing.IdCliente;
             reservaDto.IdSucursal = existing.IdSucursal;
@@ -172,7 +196,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var existing = await _reservaDataService.GetByIdAsync(id, ct);
             if (existing == null)
-                throw new NotFoundException("RES-005", $"No se encontró la habitación con ID {id}.");
+                throw new NotFoundException("RES-005", $"No se encontro la habitacion con ID {id}.");
             await _reservaDataService.DeleteAsync(id, ct);
         }
 
@@ -180,10 +204,10 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)
-                throw new NotFoundException("RES-006", $"No se encontró la reserva con ID {idReserva}.");
+                throw new NotFoundException("RES-006", $"No se encontro la reserva con ID {idReserva}.");
 
             if (existing.EstadoReserva == "CON")
-                throw new ConflictException("La reserva ya está confirmada.");
+                throw new ConflictException("La reserva ya esta confirmada.");
 
             if (existing.EstadoReserva != "PEN")
                 throw new ConflictException($"No se puede confirmar una reserva en estado '{existing.EstadoReserva}'.");
@@ -208,7 +232,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
             if (habitacionesConConflicto.Count > 0)
             {
                 var ids = string.Join(", ", habitacionesConConflicto);
-                throw new ConflictException($"No se puede confirmar la reserva: las habitaciones {ids} ya están ocupadas en el rango {existing.FechaInicio:yyyy-MM-dd} a {existing.FechaFin:yyyy-MM-dd}.");
+                throw new ConflictException($"No se puede confirmar la reserva: las habitaciones {ids} ya estan ocupadas en el rango {existing.FechaInicio:yyyy-MM-dd} a {existing.FechaFin:yyyy-MM-dd}.");
             }
 
             await _reservaDataService.ConfirmarAsync(idReserva, usuario, ct);
@@ -218,10 +242,10 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)
-                throw new NotFoundException("RES-007", $"No se encontró la reserva con ID {idReserva}.");
+                throw new NotFoundException("RES-007", $"No se encontro la reserva con ID {idReserva}.");
 
             if (existing.EstadoReserva == "CAN")
-                throw new ConflictException("La reserva ya está cancelada.");
+                throw new ConflictException("La reserva ya esta cancelada.");
 
             if (existing.EstadoReserva != "PEN" && existing.EstadoReserva != "CON")
                 throw new ConflictException($"No se puede cancelar una reserva en estado '{existing.EstadoReserva}'.");
@@ -233,7 +257,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)
-                throw new NotFoundException("RES-008", $"No se encontró la reserva con ID {idReserva}.");
+                throw new NotFoundException("RES-008", $"No se encontro la reserva con ID {idReserva}.");
             await _reservaDataService.FinalizarAsync(idReserva, usuario, ct);
         }
 

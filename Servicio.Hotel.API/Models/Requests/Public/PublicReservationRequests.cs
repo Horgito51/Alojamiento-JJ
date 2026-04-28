@@ -46,6 +46,20 @@ namespace Servicio.Hotel.API.Models.Requests.Public
             => PublicRequestGuard.RejectIdProperties(ExtraProperties);
     }
 
+    public sealed class PublicReservaPrecioRequest
+    {
+        public Guid HabitacionGuid { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public string? Canal { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtraProperties { get; set; }
+
+        public void ValidateNoIds()
+            => PublicRequestGuard.RejectIdProperties(ExtraProperties);
+    }
+
     public sealed class PublicPagoSimularRequest
     {
         public Guid ReservaGuid { get; set; }

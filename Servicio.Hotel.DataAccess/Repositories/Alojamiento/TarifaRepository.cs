@@ -48,28 +48,32 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
 
         // Dentro de la clase TarifaRepository, agregar:
 
-        public async Task<TarifaEntity?> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default)
+        public async Task<TarifaEntity?> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, string? canal = null, CancellationToken ct = default)
         {
+            var canalNormalizado = NormalizarCanal(canal);
             return await _dbSet
                 .Where(t => t.IdSucursal == idSucursal && t.IdTipoHabitacion == idTipoHabitacion
-                    && t.EstadoTarifa == "ACT" && t.FechaInicio <= fecha && t.FechaFin >= fecha)
-                .OrderBy(t => t.Prioridad)
+                    && t.EstadoTarifa == "ACT" && t.FechaInicio <= fecha && t.FechaFin >= fecha
+                    && (t.CanalTarifa.ToUpper() == "TODOS" || t.CanalTarifa.ToUpper() == canalNormalizado))
+                .OrderByDescending(t => t.Prioridad)
                 .FirstOrDefaultAsync(ct);
         }
 
-        public async Task<TarifaEntity?> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, CancellationToken ct = default)
+        public async Task<TarifaEntity?> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default)
         {
             // fechaFin es checkout (exclusivo): las noches aplican hasta fechaFin - 1 día
             var start = fechaInicio.Date;
             var endInclusive = fechaFin.Date.AddDays(-1);
+            var canalNormalizado = NormalizarCanal(canal);
 
             return await _dbSet
                 .Where(t => t.IdSucursal == idSucursal
                             && t.IdTipoHabitacion == idTipoHabitacion
                             && t.EstadoTarifa == "ACT"
                             && t.FechaInicio.Date <= start
-                            && t.FechaFin.Date >= endInclusive)
-                .OrderBy(t => t.Prioridad)
+                            && t.FechaFin.Date >= endInclusive
+                            && (t.CanalTarifa.ToUpper() == "TODOS" || t.CanalTarifa.ToUpper() == canalNormalizado))
+                .OrderByDescending(t => t.Prioridad)
                 .FirstOrDefaultAsync(ct);
         }
 
@@ -77,5 +81,8 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
         {
             return await _dbSet.Where(t => t.IdSucursal == idSucursal).ToListAsync(ct);
         }
+
+        private static string NormalizarCanal(string? canal)
+            => string.IsNullOrWhiteSpace(canal) ? "TODOS" : canal.Trim().ToUpperInvariant();
     }
 }

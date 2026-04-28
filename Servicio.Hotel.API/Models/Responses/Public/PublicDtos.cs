@@ -132,6 +132,19 @@ namespace Servicio.Hotel.API.Models.Responses.Public
         public string EstadoDetalle { get; set; } = string.Empty;
     }
 
+    public sealed class ReservaPrecioPublicDto
+    {
+        public int IdHabitacion { get; set; }
+        public Guid HabitacionGuid { get; set; }
+        public int IdSucursal { get; set; }
+        public int? IdTarifa { get; set; }
+        public decimal PrecioNocheAplicado { get; set; }
+        public decimal SubtotalLinea { get; set; }
+        public decimal ValorIvaLinea { get; set; }
+        public decimal TotalLinea { get; set; }
+        public string OrigenPrecio { get; set; } = "PRECIO_BASE";
+    }
+
     public sealed class PagoSimuladoPublicDto
     {
         public Guid ReservaGuid { get; set; }

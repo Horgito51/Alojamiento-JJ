@@ -16,7 +16,8 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Interfaces
         Task UpdateAsync(TarifaDataModel model, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
 
-        Task<TarifaDataModel> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default);
+        Task<TarifaDataModel> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, string? canal = null, CancellationToken ct = default);
+        Task<TarifaDataModel> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default);
         Task<IEnumerable<TarifaDataModel>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
         Task DesactivarAsync(int id, string usuario, CancellationToken ct = default);
     }

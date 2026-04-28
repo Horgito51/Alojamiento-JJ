@@ -138,6 +138,40 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             return CreatedAtAction(nameof(GetByGuid), new { reservaGuid = response.ReservaGuid }, response);
         }
 
+        [HttpPost("calcular-precio")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ReservaPrecioPublicDto>> CalcularPrecio([FromBody] PublicReservaPrecioRequest request)
+        {
+            request.ValidateNoIds();
+
+            if (request.HabitacionGuid == Guid.Empty)
+                throw new ValidationException("RES-PRECIO-PUB-001", "habitacionGuid es obligatorio.");
+
+            if (request.FechaFin <= request.FechaInicio)
+                throw new ValidationException("RES-PRECIO-PUB-002", "La fecha de fin debe ser posterior a la fecha de inicio.");
+
+            var habitacion = await _habitacionService.GetByGuidAsync(request.HabitacionGuid);
+            var precio = await _reservaService.CalcularPrecioHabitacionAsync(
+                habitacion.IdHabitacion,
+                request.FechaInicio,
+                request.FechaFin,
+                request.Canal ?? "WEB",
+                HttpContext.RequestAborted);
+
+            return Ok(new ReservaPrecioPublicDto
+            {
+                IdHabitacion = precio.IdHabitacion,
+                HabitacionGuid = habitacion.HabitacionGuid,
+                IdSucursal = precio.IdSucursal,
+                IdTarifa = precio.IdTarifa,
+                PrecioNocheAplicado = precio.PrecioNocheAplicado,
+                SubtotalLinea = precio.SubtotalLinea,
+                ValorIvaLinea = precio.ValorIvaLinea,
+                TotalLinea = precio.TotalLinea,
+                OrigenPrecio = precio.OrigenPrecio
+            });
+        }
+
         private async Task<ReservaPublicDto> ToPublicReservaDtoAsync(ReservaDTO reserva)
         {
             var cliente = await _clienteService.GetByIdAsync(reserva.IdCliente);

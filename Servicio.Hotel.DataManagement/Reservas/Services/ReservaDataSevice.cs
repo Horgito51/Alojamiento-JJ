@@ -176,6 +176,7 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                         habitacion.IdTipoHabitacion,
                         model.FechaInicio,
                         model.FechaFin,
+                        model.OrigenCanalReserva,
                         ct);
 
                     int? idTarifa = tarifa?.IdTarifa;

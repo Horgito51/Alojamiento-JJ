@@ -21,8 +21,8 @@ namespace Servicio.Hotel.DataAccess.Repositories.Interfaces.Alojamiento
         Task<bool> ExistsByCodigoAsync(string codigo, CancellationToken ct = default);
 
         // Nuevos métodos necesarios
-        Task<TarifaEntity?> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default);
-        Task<TarifaEntity?> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, CancellationToken ct = default);
+        Task<TarifaEntity?> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, string? canal = null, CancellationToken ct = default);
+        Task<TarifaEntity?> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default);
         Task<IEnumerable<TarifaEntity>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
     }
 }

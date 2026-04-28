@@ -17,7 +17,8 @@ namespace Servicio.Hotel.Business.Interfaces.Alojamiento
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task<IEnumerable<TarifaDTO>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
-        Task<TarifaDTO> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default);
+        Task<TarifaDTO> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, string? canal = null, CancellationToken ct = default);
+        Task<TarifaDTO?> GetTarifaVigenteRangoOrDefaultAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default);
         Task DesactivarAsync(int id, string usuario, CancellationToken ct = default);
     }
 }

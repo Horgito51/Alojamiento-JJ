@@ -75,9 +75,15 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
             await _unitOfWork.SaveChangesAsync(ct);
         }
 
-        public async Task<TarifaDataModel> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default)
+        public async Task<TarifaDataModel> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, string? canal = null, CancellationToken ct = default)
         {
-            var entity = await _tarifaRepository.GetTarifaVigenteAsync(idSucursal, idTipoHabitacion, fecha, ct);
+            var entity = await _tarifaRepository.GetTarifaVigenteAsync(idSucursal, idTipoHabitacion, fecha, canal, ct);
+            return entity?.ToModel();
+        }
+
+        public async Task<TarifaDataModel> GetTarifaVigenteRangoAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default)
+        {
+            var entity = await _tarifaRepository.GetTarifaVigenteRangoAsync(idSucursal, idTipoHabitacion, fechaInicio, fechaFin, canal, ct);
             return entity?.ToModel();
         }
 

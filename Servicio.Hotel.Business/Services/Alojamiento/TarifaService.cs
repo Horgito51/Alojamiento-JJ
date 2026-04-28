@@ -130,12 +130,18 @@ public async Task UpdateAsync(TarifaUpdateDTO tarifaUpdateDto, CancellationToken
             return dataModels.ToDtoList();
         }
 
-        public async Task<TarifaDTO> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, CancellationToken ct = default)
+        public async Task<TarifaDTO> GetTarifaVigenteAsync(int idSucursal, int idTipoHabitacion, DateTime fecha, string? canal = null, CancellationToken ct = default)
         {
-            var dataModel = await _tarifaDataService.GetTarifaVigenteAsync(idSucursal, idTipoHabitacion, fecha, ct);
+            var dataModel = await _tarifaDataService.GetTarifaVigenteAsync(idSucursal, idTipoHabitacion, fecha, canal, ct);
             if (dataModel == null)
                 throw new NotFoundException("TAR-006", "No hay tarifa vigente para los parámetros especificados.");
             return dataModel.ToDto();
+        }
+
+        public async Task<TarifaDTO?> GetTarifaVigenteRangoOrDefaultAsync(int idSucursal, int idTipoHabitacion, DateTime fechaInicio, DateTime fechaFin, string? canal = null, CancellationToken ct = default)
+        {
+            var dataModel = await _tarifaDataService.GetTarifaVigenteRangoAsync(idSucursal, idTipoHabitacion, fechaInicio, fechaFin, canal, ct);
+            return dataModel?.ToDto();
         }
 
         public async Task DesactivarAsync(int id, string usuario, CancellationToken ct = default)
