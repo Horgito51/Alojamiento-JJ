@@ -44,6 +44,15 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Pagos
             return CreatedAtAction(nameof(GetById), new { id = result.IdPago }, result);
         }
 
+        [HttpPost("/api/v{version:apiVersion}/pagos/simular")]
+        [HttpPost("/api/v{version:apiVersion}/public/pagos/simular")]
+        public async Task<ActionResult<PagoSimuladoDTO>> Simular([FromBody] PagoSimularRequest request)
+        {
+            var usuario = User.Identity?.Name ?? "Cliente";
+            var result = await _pagoService.SimularPagoAsync(request.IdReserva, request.Monto, usuario);
+            return Ok(result);
+        }
+
         [HttpPatch("{id}/estado")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] PagoEstadoRequest request)
         {

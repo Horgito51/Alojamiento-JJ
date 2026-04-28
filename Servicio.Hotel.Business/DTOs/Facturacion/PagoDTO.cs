@@ -28,4 +28,17 @@ namespace Servicio.Hotel.Business.DTOs.Facturacion
         public string ServicioOrigen { get; set; }
         public byte[] RowVersion { get; set; }
     }
+
+    public class PagoSimuladoDTO
+    {
+        public int IdReserva { get; set; }
+        public string CodigoReserva { get; set; }
+        public decimal Monto { get; set; }
+        public string EstadoPago { get; set; }
+        public string EstadoReserva { get; set; }
+        public string TransaccionExterna { get; set; }
+        public string CodigoAutorizacion { get; set; }
+        public string Mensaje { get; set; }
+        public DateTime FechaPagoUtc { get; set; }
+    }
 }

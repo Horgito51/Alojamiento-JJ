@@ -130,6 +130,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                 entity.FechaReservaUtc = DateTime.UtcNow;
 
                 var addedHeader = await _reservaRepository.AddAsync(entity, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                createdReservaId = addedHeader.IdReserva;
                 // 3) Recalcular totales de cabecera en base a lo insertado por SP
                 //    (SP_CONFIRMAR_RESERVA_HABITACION calcula montos por línea, pero no actualiza booking.RESERVAS)
                 var totales = await _context.ReservasHabitaciones
@@ -141,10 +143,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                         Iva = g.Sum(x => x.ValorIvaLinea),
                         Total = g.Sum(x => x.TotalLinea)
                     })
-                    .FirstOrDefaultAsync(ct);
-
-                if (totales == null)
-                    throw new InvalidOperationException("No se generaron detalles de reserva; no se pueden calcular totales.");
+                    .FirstOrDefaultAsync(ct)
+                    ?? new { Subtotal = 0m, Iva = 0m, Total = 0m };
 
                 var descuento = addedHeader.DescuentoAplicado;
                 if (descuento < 0) descuento = 0;
@@ -198,6 +198,29 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                 await _unitOfWork.SaveChangesAsync(ct);
 
                 // Limpiar tracking para poder reconsultar lo insertado vía SP
+                var totalesFinales = await _context.ReservasHabitaciones
+                    .Where(rh => rh.IdReserva == createdReservaId)
+                    .GroupBy(_ => 1)
+                    .Select(g => new
+                    {
+                        Subtotal = g.Sum(x => x.SubtotalLinea),
+                        Iva = g.Sum(x => x.ValorIvaLinea),
+                        Total = g.Sum(x => x.TotalLinea)
+                    })
+                    .FirstOrDefaultAsync(ct);
+
+                if (totalesFinales == null)
+                    throw new InvalidOperationException("No se generaron detalles de reserva; no se pueden calcular totales.");
+
+                addedHeader.SubtotalReserva = totalesFinales.Subtotal;
+                addedHeader.ValorIva = totalesFinales.Iva;
+                addedHeader.TotalReserva = Math.Max(0, totalesFinales.Total - descuento);
+                addedHeader.SaldoPendiente = addedHeader.TotalReserva;
+                addedHeader.ModificadoPorUsuario = string.IsNullOrWhiteSpace(model.CreadoPorUsuario) ? "Sistema" : model.CreadoPorUsuario;
+                addedHeader.FechaModificacionUtc = DateTime.UtcNow;
+
+                await _unitOfWork.SaveChangesAsync(ct);
+
                 _context.ChangeTracker.Clear();
             }, ct);
 

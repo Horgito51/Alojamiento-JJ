@@ -323,6 +323,12 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public string NuevoEstado { get; set; } = string.Empty;
     }
 
+    public class PagoSimularRequest
+    {
+        public int IdReserva { get; set; }
+        public decimal? Monto { get; set; }
+    }
+
     public class ValoracionCreateRequest
     {
         public int IdEstadia { get; set; }

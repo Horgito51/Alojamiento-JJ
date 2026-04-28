@@ -177,6 +177,15 @@ if (usuarioCreateDto.IdRol.HasValue && (usuarioCreateDto.Roles == null || usuari
             return dataModel.ToDto();
         }
 
+        public async Task AsociarClienteAsync(int idUsuario, int idCliente, string usuario, CancellationToken ct = default)
+        {
+            var existing = await _usuarioDataService.GetByIdAsync(idUsuario, ct);
+            if (existing == null)
+                throw new NotFoundException("USR-015", $"No se encontró el usuario con ID {idUsuario}.");
+
+            await _usuarioDataService.AsociarClienteAsync(idUsuario, idCliente, usuario, ct);
+        }
+
         public async Task InhabilitarAsync(int id, string motivo, string usuario, CancellationToken ct = default)
         {
             var existing = await _usuarioDataService.GetByIdAsync(id, ct);

@@ -67,6 +67,7 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
 
             // Actualizamos campos básicos
             entity.Correo = model.Correo;
+            entity.IdCliente = model.IdCliente;
             entity.Nombres = model.Nombres;
             entity.Apellidos = model.Apellidos;
             entity.EstadoUsuario = model.EstadoUsuario;
@@ -133,6 +134,19 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Services
         public async Task CambiarPasswordAsync(int id, string newHash, string newSalt, string usuario, CancellationToken ct = default)
         {
             await _usuarioRepository.CambiarPasswordAsync(id, newHash, newSalt, usuario, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+        }
+
+        public async Task AsociarClienteAsync(int idUsuario, int idCliente, string usuario, CancellationToken ct = default)
+        {
+            var entity = await _usuarioRepository.GetByIdAsync(idUsuario, ct);
+            if (entity == null) return;
+
+            entity.IdCliente = idCliente;
+            entity.ModificadoPorUsuario = usuario;
+            entity.FechaModificacionUtc = DateTime.UtcNow;
+
+            await _usuarioRepository.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }
 

@@ -11,8 +11,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Servicio.Hotel.Business.Common;
+using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.DTOs.Seguridad;
 using Servicio.Hotel.Business.Exceptions;
+using Servicio.Hotel.Business.Interfaces.Reservas;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
 using Servicio.Hotel.Business.Validators.Seguridad;
 using Servicio.Hotel.DataManagement.Seguridad.Interfaces;
@@ -26,12 +28,14 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         private readonly IUsuarioDataService _usuarioDataService;
         private readonly IConfiguration _configuration;
         private readonly IRolDataService _rolDataService;
+        private readonly IClienteService _clienteService;
 
-        public AuthService(IUsuarioDataService usuarioDataService, IConfiguration configuration, IRolDataService rolDataService)
+        public AuthService(IUsuarioDataService usuarioDataService, IConfiguration configuration, IRolDataService rolDataService, IClienteService clienteService)
         {
             _usuarioDataService = usuarioDataService;
             _configuration = configuration;
             _rolDataService = rolDataService;
+            _clienteService = clienteService;
         }
 
         public async Task<LoginResponseDTO> LoginAsync(LoginRequestDTO loginRequest, CancellationToken ct = default)
@@ -94,9 +98,13 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
                 new Claim(ClaimTypes.Name, usuario.Username),
                 new Claim(ClaimTypes.Email, usuario.Correo),
+                new Claim("usuarioGuid", usuario.UsuarioGuid.ToString()),
                 new Claim("nombres", usuario.Nombres ?? ""),
                 new Claim("apellidos", usuario.Apellidos ?? "")
             };
+
+            if (usuario.IdCliente.HasValue)
+                claims.Add(new Claim("idCliente", usuario.IdCliente.Value.ToString()));
 
             foreach (var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -305,7 +313,6 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 throw new BusinessException("AUTH-013", "El correo ya está registrado.");
 
             // 🔥 Obtener el rol CLIENTE (id = 4 - QUEMADO)
-            const int CLIENTE_ROLE_ID = 4;
             var clienteRole = await GetClienteRoleAsync(ct);
             if (clienteRole == null)
                 throw new NotFoundException("AUTH-014", "No se encontró el rol de cliente en el sistema.");
@@ -313,9 +320,23 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             // Hash de contraseña
             var (hash, salt) = PasswordHasher.HashPassword(registerRequest.Password);
 
+            var cliente = await _clienteService.CreateAsync(new ClienteCreateDTO
+            {
+                TipoIdentificacion = "CLI",
+                NumeroIdentificacion = $"CLI-{Guid.NewGuid():N}"[..20],
+                Nombres = registerRequest.Nombres.Trim(),
+                Apellidos = registerRequest.Apellidos?.Trim() ?? "",
+                RazonSocial = "",
+                Correo = registerRequest.Correo.Trim(),
+                Telefono = "0000000000",
+                Direccion = "",
+                Estado = "ACT"
+            }, ct);
+
             // Crear el usuario público
             var nuevoUsuario = new Servicio.Hotel.DataManagement.Seguridad.Models.UsuarioDataModel
             {
+                IdCliente = cliente.IdCliente,
                 Username = registerRequest.Username.Trim(),
                 Correo = registerRequest.Correo.Trim(),
                 Nombres = registerRequest.Nombres.Trim(),
@@ -329,6 +350,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             };
 
             var usuarioCreado = await _usuarioDataService.AddAsync(nuevoUsuario, ct);
+            usuarioCreado = await _usuarioDataService.GetByIdAsync(usuarioCreado.IdUsuario, ct) ?? usuarioCreado;
 
             // Generar tokens
             var roles = usuarioCreado.Roles?.Select(r => r.NombreRol).ToList() ?? new List<string>();

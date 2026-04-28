@@ -23,6 +23,7 @@ namespace Servicio.Hotel.DataManagement.Seguridad.Interfaces
         Task<UsuarioDataModel?> AuthenticateAsync(string username, string passwordHash, CancellationToken ct = default);
         Task InhabilitarAsync(int id, string motivo, string usuario, CancellationToken ct = default);
         Task CambiarPasswordAsync(int id, string newHash, string newSalt, string usuario, CancellationToken ct = default);
+        Task AsociarClienteAsync(int idUsuario, int idCliente, string usuario, CancellationToken ct = default);
         Task<bool> ExistsByUsernameAsync(string username, int? excludeId = null, CancellationToken ct = default);
         Task<bool> ExistsByCorreoAsync(string correo, int? excludeId = null, CancellationToken ct = default);
     }
