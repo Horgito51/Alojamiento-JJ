@@ -36,6 +36,22 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             return Ok(result);
         }
 
+        [HttpGet]
+        public async Task<ActionResult> GetMisReservas(
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 50,
+            [FromQuery] string? estado = null)
+        {
+            var idCliente = await GetAuthenticatedClienteIdAsync();
+            var filtro = new ReservaFiltroDTO 
+            { 
+                IdCliente = idCliente,
+                EstadoReserva = estado
+            };
+            var result = await _reservaService.GetByFiltroAsync(filtro, page, limit);
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<ActionResult<ReservaDTO>> Create([FromBody] ReservaCreateRequest request)
         {
