@@ -34,10 +34,28 @@ namespace Servicio.Hotel.DataManagement.Facturacion.Services
             return entity?.ToModel();
         }
 
+        public async Task<DataPagedResult<PagoDataModel>> GetAllAsync(int pageNumber, int pageSize, CancellationToken ct = default)
+        {
+            var entities = await _pagoRepository.GetAllAsync(ct);
+            var items = entities
+                .OrderByDescending(p => p.FechaPagoUtc)
+                .ToModelList();
+            var totalCount = items.Count;
+            var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            return new DataPagedResult<PagoDataModel>
+            {
+                Items = pagedItems,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<DataPagedResult<PagoDataModel>> GetByFacturaAsync(int idFactura, int pageNumber, int pageSize, CancellationToken ct = default)
         {
             var entities = await _pagoRepository.GetByFacturaAsync(idFactura, ct);
-            var items = entities.ToModelList();
+            var items = entities.OrderByDescending(p => p.FechaPagoUtc).ToModelList();
             var totalCount = items.Count;
             var pagedItems = items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
             return new DataPagedResult<PagoDataModel>

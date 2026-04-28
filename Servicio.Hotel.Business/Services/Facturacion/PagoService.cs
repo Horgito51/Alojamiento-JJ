@@ -39,8 +39,23 @@ namespace Servicio.Hotel.Business.Services.Facturacion
             return dataModel.ToDto();
         }
 
+        public async Task<PagedResult<PagoDTO>> GetAllAsync(int pageNumber, int pageSize, CancellationToken ct = default)
+        {
+            var pagedData = await _pagoDataService.GetAllAsync(pageNumber, pageSize, ct);
+            return new PagedResult<PagoDTO>
+            {
+                Items = pagedData.Items.ToDtoList(),
+                TotalCount = pagedData.TotalCount,
+                PageNumber = pagedData.PageNumber,
+                PageSize = pagedData.PageSize
+            };
+        }
+
         public async Task<PagedResult<PagoDTO>> GetByFacturaAsync(int idFactura, int pageNumber, int pageSize, CancellationToken ct = default)
         {
+            if (idFactura <= 0)
+                throw new ValidationException("PAG-007", "El idFactura es obligatorio para consultar pagos por factura.");
+
             var pagedData = await _pagoDataService.GetByFacturaAsync(idFactura, pageNumber, pageSize, ct);
             return new PagedResult<PagoDTO>
             {

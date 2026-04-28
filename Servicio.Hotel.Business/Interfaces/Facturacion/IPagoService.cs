@@ -11,6 +11,7 @@ namespace Servicio.Hotel.Business.Interfaces.Facturacion
     {
         Task<PagoDTO> GetByIdAsync(int id, CancellationToken ct = default);
         Task<PagoDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default);
+        Task<PagedResult<PagoDTO>> GetAllAsync(int pageNumber, int pageSize, CancellationToken ct = default);
         Task<PagedResult<PagoDTO>> GetByFacturaAsync(int idFactura, int pageNumber, int pageSize, CancellationToken ct = default);
         Task<PagoDTO> CreateAsync(PagoDTO pagoDto, CancellationToken ct = default);
         Task UpdateAsync(PagoDTO pagoDto, CancellationToken ct = default);

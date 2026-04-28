@@ -23,7 +23,14 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Pagos
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PagoDTO>>> GetAll([FromQuery] int facturaId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        public async Task<ActionResult<IEnumerable<PagoDTO>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        {
+            var result = await _pagoService.GetAllAsync(page, pageSize);
+            return Ok(result.Items);
+        }
+
+        [HttpGet("factura/{facturaId:int}")]
+        public async Task<ActionResult<IEnumerable<PagoDTO>>> GetByFactura(int facturaId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
             var result = await _pagoService.GetByFacturaAsync(facturaId, page, pageSize);
             return Ok(result.Items);
