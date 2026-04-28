@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +15,14 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
         public FacturaRepository(ServicioHotelDbContext context) : base(context) { }
 
         public async Task<FacturaEntity?> GetByIdAsync(int id, CancellationToken ct = default)
-            => await base.GetByIdAsync(id, ct);
+            => await _dbSet
+                .Include(f => f.FacturaDetalles)
+                .FirstOrDefaultAsync(f => f.IdFactura == id, ct);
 
         public async Task<FacturaEntity?> GetByGuidAsync(Guid guid, CancellationToken ct = default)
-            => await _dbSet.FirstOrDefaultAsync(f => f.GuidFactura == guid, ct);
+            => await _dbSet
+                .Include(f => f.FacturaDetalles)
+                .FirstOrDefaultAsync(f => f.GuidFactura == guid, ct);
 
         public async Task<IEnumerable<FacturaEntity>> GetAllAsync(CancellationToken ct = default)
             => await base.GetAllAsync(ct);
@@ -61,25 +65,123 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
             var factura = await GetByIdAsync(idFactura, ct);
             return factura != null && factura.Estado == "PAG";
         }
-        // Estos métodos ejecutan los stored procedures que ya tienes en la base de datos.
-        // Ajusta los nombres de los SP según lo que tengas.
 
-public async Task<int> GenerarFacturaReservaAsync(int idReserva, string usuario, CancellationToken ct = default)
+        public async Task<int> GenerarFacturaReservaAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
-            var reserva = await _context.Reservas.AsNoTracking().FirstOrDefaultAsync(r => r.IdReserva == idReserva, ct);
-            if (reserva == null)
-                throw new KeyNotFoundException();
+            var reserva = await _context.Reservas
+                .Include(r => r.ReservasHabitaciones)
+                .FirstOrDefaultAsync(r => r.IdReserva == idReserva, ct);
 
-            var sql = "EXEC booking.SP_GENERAR_FACTURA_RESERVA @id_reserva = {0}, @usuario = {1}";
-            var result = await _context.Database.SqlQueryRaw<int?>(sql, idReserva, usuario).ToListAsync(ct);
-            return result.FirstOrDefault() ?? 0;
+            if (reserva == null)
+                throw new KeyNotFoundException($"No se encontró la reserva con ID {idReserva}.");
+
+            // Crear cabecera de la factura
+            var factura = new FacturaEntity
+            {
+                GuidFactura = Guid.NewGuid(),
+                IdReserva = reserva.IdReserva,
+                IdCliente = reserva.IdCliente,
+                TipoFactura = "RESERVA",
+                NumeroFactura = $"RES-{reserva.CodigoReserva}",
+                FechaEmision = DateTime.UtcNow,
+                Subtotal = reserva.SubtotalReserva,
+                ValorIva = reserva.ValorIva,
+                Total = reserva.TotalReserva,
+                DescuentoTotal = reserva.DescuentoAplicado,
+                SaldoPendiente = reserva.TotalReserva,
+                Estado = "PEN",
+                CreadoPorUsuario = usuario,
+                FechaRegistroUtc = DateTime.UtcNow,
+                ServicioOrigen = "facturacion-service"
+            };
+
+            await _context.Facturas.AddAsync(factura, ct);
+            await _context.SaveChangesAsync(ct);
+
+            // Crear detalles de la factura basados en las habitaciones
+            foreach (var rh in reserva.ReservasHabitaciones)
+            {
+                var detalle = new FacturaDetalleEntity
+                {
+                    FacturaDetalleGuid = Guid.NewGuid(),
+                    IdFactura = factura.IdFactura,
+                    TipoItem = "HABITACION",
+                    ReferenciaId = rh.IdHabitacion,
+                    DescripcionItem = $"Hospedaje Habitacion {rh.IdHabitacion} ({rh.FechaInicio:yyyy-MM-dd} al {rh.FechaFin:yyyy-MM-dd})",
+                    Cantidad = (int)(rh.FechaFin.Date - rh.FechaInicio.Date).TotalDays,
+                    PrecioUnitario = rh.PrecioNocheAplicado,
+                    SubtotalLinea = rh.SubtotalLinea,
+                    ValorIvaLinea = rh.ValorIvaLinea,
+                    DescuentoLinea = rh.DescuentoLinea,
+                    TotalLinea = rh.TotalLinea,
+                    FechaRegistroUtc = DateTime.UtcNow,
+                    CreadoPorUsuario = usuario
+                };
+                if (detalle.Cantidad <= 0) detalle.Cantidad = 1;
+
+                await _context.FacturaDetalles.AddAsync(detalle, ct);
+            }
+
+            await _context.SaveChangesAsync(ct);
+            return factura.IdFactura;
         }
 
         public async Task<int> GenerarFacturaFinalAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
-            var sql = "EXEC booking.SP_GENERAR_FACTURA_FINAL @id_reserva = {0}, @usuario = {1}";
-            var result = await _context.Database.SqlQueryRaw<int?>(sql, idReserva, usuario).ToListAsync(ct);
-            return result.FirstOrDefault() ?? 0;
+            var reserva = await _context.Reservas
+                .Include(r => r.ReservasHabitaciones)
+                .FirstOrDefaultAsync(r => r.IdReserva == idReserva, ct);
+
+            if (reserva == null)
+                throw new KeyNotFoundException($"No se encontró la reserva con ID {idReserva}.");
+
+            var factura = new FacturaEntity
+            {
+                GuidFactura = Guid.NewGuid(),
+                IdReserva = reserva.IdReserva,
+                IdCliente = reserva.IdCliente,
+                TipoFactura = "FINAL",
+                NumeroFactura = $"FAC-{reserva.CodigoReserva}",
+                FechaEmision = DateTime.UtcNow,
+                Subtotal = reserva.SubtotalReserva,
+                ValorIva = reserva.ValorIva,
+                Total = reserva.TotalReserva,
+                DescuentoTotal = reserva.DescuentoAplicado,
+                SaldoPendiente = reserva.TotalReserva,
+                Estado = "PEN",
+                CreadoPorUsuario = usuario,
+                FechaRegistroUtc = DateTime.UtcNow,
+                ServicioOrigen = "facturacion-service"
+            };
+
+            await _context.Facturas.AddAsync(factura, ct);
+            await _context.SaveChangesAsync(ct);
+
+            foreach (var rh in reserva.ReservasHabitaciones)
+            {
+                var detalle = new FacturaDetalleEntity
+                {
+                    FacturaDetalleGuid = Guid.NewGuid(),
+                    IdFactura = factura.IdFactura,
+                    TipoItem = "HABITACION",
+                    ReferenciaId = rh.IdHabitacion,
+                    DescripcionItem = $"Liquidacion Hospedaje Habitacion {rh.IdHabitacion}",
+                    Cantidad = (int)(rh.FechaFin.Date - rh.FechaInicio.Date).TotalDays,
+                    PrecioUnitario = rh.PrecioNocheAplicado,
+                    SubtotalLinea = rh.SubtotalLinea,
+                    ValorIvaLinea = rh.ValorIvaLinea,
+                    DescuentoLinea = rh.DescuentoLinea,
+                    TotalLinea = rh.TotalLinea,
+                    FechaRegistroUtc = DateTime.UtcNow,
+                    CreadoPorUsuario = usuario
+                };
+                if (detalle.Cantidad <= 0) detalle.Cantidad = 1;
+
+                await _context.FacturaDetalles.AddAsync(detalle, ct);
+            }
+
+            await _context.SaveChangesAsync(ct);
+            return factura.IdFactura;
         }
     }
 }

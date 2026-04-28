@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.Exceptions;
+using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Reservas;
 using Servicio.Hotel.Business.Mappers.Reservas;
 using Servicio.Hotel.Business.Validators.Reservas;
@@ -15,10 +17,17 @@ namespace Servicio.Hotel.Business.Services.Reservas
     public class ReservaService : IReservaService
     {
         private readonly IReservaDataService _reservaDataService;
+        private readonly ITarifaService _tarifaService;
+        private readonly IHabitacionService _habitacionService;
 
-        public ReservaService(IReservaDataService reservaDataService)
+        public ReservaService(
+            IReservaDataService reservaDataService, 
+            ITarifaService tarifaService,
+            IHabitacionService habitacionService)
         {
             _reservaDataService = reservaDataService;
+            _tarifaService = tarifaService;
+            _habitacionService = habitacionService;
         }
 
         public async Task<ReservaDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -59,6 +68,43 @@ namespace Servicio.Hotel.Business.Services.Reservas
 
         public async Task<ReservaDTO> CreateAsync(ReservaCreateDTO reservaCreateDto, CancellationToken ct = default)
         {
+            // Recalcular totales en el backend para mayor seguridad
+            decimal subtotalTotal = 0;
+            var ivaRate = 0.12m;
+
+            foreach (var h in reservaCreateDto.Habitaciones)
+            {
+                // Buscar la tarifa vigente para esta habitación
+                decimal precioNoche = 0;
+                try
+                {
+                    var tarifa = await _tarifaService.GetTarifaVigenteAsync(reservaCreateDto.IdSucursal, h.IdHabitacion, reservaCreateDto.FechaInicio, ct);
+                    precioNoche = tarifa.PrecioPorNoche;
+                    h.IdTarifa = tarifa.IdTarifa;
+                }
+                catch
+                {
+                    // Fallback al precio base de la habitación si no hay tarifa
+                    var habitacion = await _habitacionService.GetByIdAsync(h.IdHabitacion, ct);
+                    precioNoche = habitacion.PrecioBase;
+                }
+
+                var noches = (int)(reservaCreateDto.FechaFin.Date - reservaCreateDto.FechaInicio.Date).TotalDays;
+                if (noches <= 0) noches = 1;
+
+                h.PrecioNocheAplicado = precioNoche;
+                h.SubtotalLinea = precioNoche * noches;
+                h.ValorIvaLinea = Math.Round(h.SubtotalLinea * ivaRate, 2);
+                h.TotalLinea = h.SubtotalLinea + h.ValorIvaLinea;
+
+                subtotalTotal += h.SubtotalLinea;
+            }
+
+            reservaCreateDto.SubtotalReserva = subtotalTotal;
+            reservaCreateDto.ValorIva = Math.Round(subtotalTotal * ivaRate, 2);
+            reservaCreateDto.TotalReserva = subtotalTotal + reservaCreateDto.ValorIva - reservaCreateDto.DescuentoAplicado;
+            reservaCreateDto.SaldoPendiente = reservaCreateDto.TotalReserva;
+
             var reservaDto = new ReservaDTO
             {
                 IdCliente = reservaCreateDto.IdCliente,
@@ -103,14 +149,12 @@ namespace Servicio.Hotel.Business.Services.Reservas
             if (existing == null)
                 throw new NotFoundException("RES-004", $"No se encontró la reserva con ID {reservaUpdateDto.IdReserva}.");
 
-            // Poblamos el DTO con los datos existentes que no vienen en el request para pasar la validación
             reservaDto.IdCliente = existing.IdCliente;
             reservaDto.IdSucursal = existing.IdSucursal;
             reservaDto.OrigenCanalReserva = existing.OrigenCanalReserva;
 
             ReservaValidator.Validate(reservaDto);
 
-            // Solo actualizamos los campos permitidos en la actualización
             existing.FechaInicio = reservaDto.FechaInicio;
             existing.FechaFin = reservaDto.FechaFin;
             existing.SubtotalReserva = reservaDto.SubtotalReserva;
@@ -128,11 +172,11 @@ namespace Servicio.Hotel.Business.Services.Reservas
         {
             var existing = await _reservaDataService.GetByIdAsync(id, ct);
             if (existing == null)
-                throw new NotFoundException("RES-005", $"No se encontró la reserva con ID {id}.");
+                throw new NotFoundException("RES-005", $"No se encontró la habitación con ID {id}.");
             await _reservaDataService.DeleteAsync(id, ct);
         }
 
-public async Task ConfirmarAsync(int idReserva, string usuario, CancellationToken ct = default)
+        public async Task ConfirmarAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)
@@ -170,7 +214,7 @@ public async Task ConfirmarAsync(int idReserva, string usuario, CancellationToke
             await _reservaDataService.ConfirmarAsync(idReserva, usuario, ct);
         }
 
-public async Task CancelarAsync(int idReserva, string motivo, string usuario, CancellationToken ct = default)
+        public async Task CancelarAsync(int idReserva, string motivo, string usuario, CancellationToken ct = default)
         {
             var existing = await _reservaDataService.GetByIdAsync(idReserva, ct);
             if (existing == null)

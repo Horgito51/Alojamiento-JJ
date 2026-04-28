@@ -29,7 +29,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<HabitacionDTO>>> Search([FromQuery] string query)
         {
-            // Implementación simplificada
+            // HabitacionService ya maneja la lógica de precios vigentes
             var result = await _habitacionService.GetAllAsync(); 
             return Ok(result);
         }
@@ -51,7 +51,6 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         [HttpGet("{id}/reviews")]
         public async Task<ActionResult<IEnumerable<ValoracionDTO>>> GetReviews(int id)
         {
-            // Implementación simplificada
             var filtro = new ValoracionFiltroDTO { IdHabitacion = id };
             var result = await _valoracionService.GetByFiltroAsync(filtro, 1, 10);
             return Ok(result.Items);

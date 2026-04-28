@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -15,10 +16,25 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
     public class HabitacionService : IHabitacionService
     {
         private readonly IHabitacionDataService _habitacionDataService;
+        private readonly ITarifaService _tarifaService;
 
-        public HabitacionService(IHabitacionDataService habitacionDataService)
+        public HabitacionService(IHabitacionDataService habitacionDataService, ITarifaService tarifaService)
         {
             _habitacionDataService = habitacionDataService;
+            _tarifaService = tarifaService;
+        }
+
+        private async Task<decimal> GetPrecioVigente(int idSucursal, int idTipoHabitacion, decimal precioBaseActual)
+        {
+            try
+            {
+                var tarifa = await _tarifaService.GetTarifaVigenteAsync(idSucursal, idTipoHabitacion, DateTime.UtcNow);
+                return tarifa.PrecioPorNoche;
+            }
+            catch
+            {
+                return precioBaseActual;
+            }
         }
 
         public async Task<HabitacionDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -26,7 +42,10 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             var dataModel = await _habitacionDataService.GetByIdAsync(id, ct);
             if (dataModel == null)
                 throw new NotFoundException("HAB-001", $"No se encontró la habitación con ID {id}.");
-            return dataModel.ToDto();
+            
+            var dto = dataModel.ToDto();
+            dto.PrecioBase = await GetPrecioVigente(dto.IdSucursal, dto.IdTipoHabitacion, dto.PrecioBase);
+            return dto;
         }
 
         public async Task<HabitacionDTO> GetByGuidAsync(Guid guid, CancellationToken ct = default)
@@ -34,13 +53,23 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             var dataModel = await _habitacionDataService.GetByGuidAsync(guid, ct);
             if (dataModel == null)
                 throw new NotFoundException("HAB-002", $"No se encontró la habitación con GUID {guid}.");
-            return dataModel.ToDto();
+            
+            var dto = dataModel.ToDto();
+            dto.PrecioBase = await GetPrecioVigente(dto.IdSucursal, dto.IdTipoHabitacion, dto.PrecioBase);
+            return dto;
         }
 
         public async Task<IEnumerable<HabitacionDTO>> GetAllAsync(CancellationToken ct = default)
         {
             var pagedResult = await _habitacionDataService.GetAllPagedAsync(1, int.MaxValue, ct);
-            return pagedResult.Items.ToDtoList();
+            var items = pagedResult.Items.ToDtoList();
+            
+            foreach (var item in items)
+            {
+                item.PrecioBase = await GetPrecioVigente(item.IdSucursal, item.IdTipoHabitacion, item.PrecioBase);
+            }
+            
+            return items;
         }
 
         public async Task<HabitacionDTO> CreateAsync(HabitacionCreateDTO habitacionCreateDto, CancellationToken ct = default)
@@ -66,38 +95,18 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
 
         public async Task UpdateAsync(HabitacionUpdateDTO habitacionUpdateDto, CancellationToken ct = default)
         {
-            var habitacionDto = new HabitacionDTO
-            {
-                IdHabitacion = habitacionUpdateDto.IdHabitacion,
-                IdSucursal = habitacionUpdateDto.IdSucursal,
-                IdTipoHabitacion = habitacionUpdateDto.IdTipoHabitacion,
-                NumeroHabitacion = habitacionUpdateDto.NumeroHabitacion,
-                Piso = habitacionUpdateDto.Piso,
-                CapacidadHabitacion = habitacionUpdateDto.CapacidadHabitacion,
-                PrecioBase = habitacionUpdateDto.PrecioBase,
-                Url = habitacionUpdateDto.Url ?? string.Empty,
-                DescripcionHabitacion = habitacionUpdateDto.DescripcionHabitacion ?? string.Empty,
-                EstadoHabitacion = habitacionUpdateDto.EstadoHabitacion
-            };
-
             var existing = await _habitacionDataService.GetByIdAsync(habitacionUpdateDto.IdHabitacion, ct);
             if (existing == null)
                 throw new NotFoundException("HAB-003", $"No se encontró la habitación con ID {habitacionUpdateDto.IdHabitacion}.");
 
-            // Poblamos el DTO con los datos existentes que no vienen en el request para pasar la validación
-            habitacionDto.IdSucursal = existing.IdSucursal;
-
-            HabitacionValidator.Validate(habitacionDto);
-
-            // Solo actualizamos los campos permitidos en la actualización
-            existing.IdTipoHabitacion = habitacionDto.IdTipoHabitacion;
-            existing.NumeroHabitacion = habitacionDto.NumeroHabitacion;
-            existing.Piso = habitacionDto.Piso;
-            existing.CapacidadHabitacion = habitacionDto.CapacidadHabitacion;
-            existing.PrecioBase = habitacionDto.PrecioBase;
-            existing.Url = habitacionDto.Url;
-            existing.DescripcionHabitacion = habitacionDto.DescripcionHabitacion;
-            existing.EstadoHabitacion = habitacionDto.EstadoHabitacion;
+            existing.IdTipoHabitacion = habitacionUpdateDto.IdTipoHabitacion;
+            existing.NumeroHabitacion = habitacionUpdateDto.NumeroHabitacion;
+            existing.Piso = habitacionUpdateDto.Piso;
+            existing.CapacidadHabitacion = habitacionUpdateDto.CapacidadHabitacion;
+            existing.PrecioBase = habitacionUpdateDto.PrecioBase;
+            existing.Url = habitacionUpdateDto.Url ?? string.Empty;
+            existing.DescripcionHabitacion = habitacionUpdateDto.DescripcionHabitacion ?? string.Empty;
+            existing.EstadoHabitacion = habitacionUpdateDto.EstadoHabitacion;
 
             await _habitacionDataService.UpdateAsync(existing, ct);
         }
@@ -113,13 +122,23 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         public async Task<IEnumerable<HabitacionDTO>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default)
         {
             var dataModels = await _habitacionDataService.GetBySucursalAsync(idSucursal, ct);
-            return dataModels.ToDtoList();
+            var items = dataModels.ToDtoList();
+            foreach (var item in items)
+            {
+                item.PrecioBase = await GetPrecioVigente(item.IdSucursal, item.IdTipoHabitacion, item.PrecioBase);
+            }
+            return items;
         }
 
         public async Task<IEnumerable<HabitacionDTO>> GetByTipoHabitacionAsync(int idTipoHabitacion, CancellationToken ct = default)
         {
             var dataModels = await _habitacionDataService.GetByTipoHabitacionAsync(idTipoHabitacion, ct);
-            return dataModels.ToDtoList();
+            var items = dataModels.ToDtoList();
+            foreach (var item in items)
+            {
+                item.PrecioBase = await GetPrecioVigente(item.IdSucursal, item.IdTipoHabitacion, item.PrecioBase);
+            }
+            return items;
         }
 
         public async Task UpdateEstadoAsync(int id, string nuevoEstado, string usuario, CancellationToken ct = default)

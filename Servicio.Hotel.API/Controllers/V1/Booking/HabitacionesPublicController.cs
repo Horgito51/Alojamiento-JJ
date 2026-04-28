@@ -12,7 +12,10 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         private readonly ISucursalService _sucursalService;
         private readonly ITipoHabitacionService _tipoHabitacionService;
 
-        public HabitacionesPublicController(IHabitacionService habitacionService, ISucursalService sucursalService, ITipoHabitacionService tipoHabitacionService)
+        public HabitacionesPublicController(
+            IHabitacionService habitacionService, 
+            ISucursalService sucursalService, 
+            ITipoHabitacionService tipoHabitacionService)
         {
             _habitacionService = habitacionService;
             _sucursalService = sucursalService;
@@ -25,12 +28,13 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             var habitaciones = await _habitacionService.GetAllAsync();
             var sucursales = await _sucursalService.GetAllAsync();
             var tipos = await _tipoHabitacionService.GetAllAsync();
-
+            
             var result = habitaciones
-                .Where(h => h.EstadoHabitacion == "DIS") // Only available rooms for marketplace
+                .Where(h => h.EstadoHabitacion == "DIS") // Solo habitaciones disponibles
                 .Select(h => {
                     var sucursal = sucursales.FirstOrDefault(s => s.IdSucursal == h.IdSucursal);
                     var tipo = tipos.FirstOrDefault(t => t.IdTipoHabitacion == h.IdTipoHabitacion);
+                    
                     return new HabitacionPublicDto
                     {
                         IdHabitacion = h.IdHabitacion,
@@ -38,7 +42,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
                         NumeroHabitacion = h.NumeroHabitacion,
                         Piso = h.Piso,
                         CapacidadHabitacion = h.CapacidadHabitacion,
-                        PrecioBase = h.PrecioBase,
+                        PrecioBase = h.PrecioBase, // Ya viene calculado por HabitacionService
                         DescripcionHabitacion = h.DescripcionHabitacion,
                         EstadoHabitacion = h.EstadoHabitacion,
                         SucursalGuid = sucursal?.SucursalGuid ?? Guid.Empty,
@@ -57,7 +61,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             var habitacion = await _habitacionService.GetByGuidAsync(habitacionGuid);
             var sucursal = await _sucursalService.GetByIdAsync(habitacion.IdSucursal);
             var tipo = await _tipoHabitacionService.GetByIdAsync(habitacion.IdTipoHabitacion);
-
+            
             var dto = new HabitacionPublicDto
             {
                 IdHabitacion = habitacion.IdHabitacion,
@@ -65,7 +69,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
                 NumeroHabitacion = habitacion.NumeroHabitacion,
                 Piso = habitacion.Piso,
                 CapacidadHabitacion = habitacion.CapacidadHabitacion,
-                PrecioBase = habitacion.PrecioBase,
+                PrecioBase = habitacion.PrecioBase, // Ya viene calculado por HabitacionService
                 DescripcionHabitacion = habitacion.DescripcionHabitacion,
                 EstadoHabitacion = habitacion.EstadoHabitacion,
                 SucursalGuid = sucursal.SucursalGuid,
