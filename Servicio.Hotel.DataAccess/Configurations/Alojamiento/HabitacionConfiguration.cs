@@ -19,6 +19,7 @@ namespace Servicio.Hotel.DataAccess.Configurations.Alojamiento
             builder.Property(e => e.Piso).HasColumnName("piso");
             builder.Property(e => e.CapacidadHabitacion).HasColumnName("capacidad_habitacion");
             builder.Property(e => e.PrecioBase).HasColumnName("precio_base").HasColumnType("decimal(12,2)");
+            builder.Property(e => e.Url).HasColumnName("url").HasMaxLength(500);
             builder.Property(e => e.DescripcionHabitacion).HasColumnName("descripcion_habitacion").HasMaxLength(250);
             builder.Property(e => e.EstadoHabitacion).HasColumnName("estado_habitacion").HasMaxLength(3);
             builder.Property(e => e.EsEliminado).HasColumnName("es_eliminado");

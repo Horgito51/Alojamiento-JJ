@@ -28,6 +28,13 @@ namespace Servicio.Hotel.API.Controllers.V1.Auth
             return Ok(response);
         }
 
+        [HttpPost("register-cliente")]
+        public async Task<IActionResult> RegisterCliente([FromBody] RegisterClienteDTO registerRequest)
+        {
+            var response = await _authService.RegisterClienteAsync(registerRequest);
+            return CreatedAtAction(nameof(Login), response);
+        }
+
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {

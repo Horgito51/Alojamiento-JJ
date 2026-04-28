@@ -66,5 +66,21 @@ namespace Servicio.Hotel.API.Models.Responses.Public
             PermiteReservaPublica = dto.PermiteReservaPublica,
             EstadoTipoHabitacion = dto.EstadoTipoHabitacion
         };
+
+        public static HabitacionPublicDto ToPublicDto(this HabitacionDTO dto, SucursalDTO sucursal, TipoHabitacionDTO tipo) => new()
+        {
+            IdHabitacion = dto.IdHabitacion,
+            HabitacionGuid = dto.HabitacionGuid,
+            NumeroHabitacion = dto.NumeroHabitacion,
+            Piso = dto.Piso,
+            CapacidadHabitacion = dto.CapacidadHabitacion,
+            PrecioBase = dto.PrecioBase,
+            DescripcionHabitacion = dto.DescripcionHabitacion,
+            EstadoHabitacion = dto.EstadoHabitacion,
+            SucursalGuid = sucursal.SucursalGuid,
+            TipoHabitacionGuid = tipo.TipoHabitacionGuid,
+            TipoHabitacionSlug = tipo.Slug,
+            ImagenUrl = dto.Url
+        };
     }
 }

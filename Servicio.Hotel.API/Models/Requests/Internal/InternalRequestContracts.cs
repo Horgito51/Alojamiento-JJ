@@ -162,6 +162,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public int? Piso { get; set; }
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
+        public string? Url { get; set; }
         public string? DescripcionHabitacion { get; set; }
         public string EstadoHabitacion { get; set; } = "DIS";
     }
@@ -174,6 +175,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
         public int? Piso { get; set; }
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
+        public string? Url { get; set; }
         public string? DescripcionHabitacion { get; set; }
         public string EstadoHabitacion { get; set; } = "DIS";
     }
@@ -485,6 +487,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Piso = request.Piso,
                 CapacidadHabitacion = request.CapacidadHabitacion,
                 PrecioBase = request.PrecioBase,
+                Url = request.Url ?? string.Empty,
                 DescripcionHabitacion = request.DescripcionHabitacion ?? string.Empty,
                 EstadoHabitacion = request.EstadoHabitacion
             };
@@ -499,6 +502,7 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
                 Piso = request.Piso,
                 CapacidadHabitacion = request.CapacidadHabitacion,
                 PrecioBase = request.PrecioBase,
+                Url = request.Url ?? string.Empty,
                 DescripcionHabitacion = request.DescripcionHabitacion ?? string.Empty,
                 EstadoHabitacion = request.EstadoHabitacion
             };

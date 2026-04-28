@@ -9,6 +9,7 @@ namespace Servicio.Hotel.API.Models.Responses.Internal
         public int? Piso { get; set; }
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
+        public string? ImagenUrl { get; set; }
         public string? DescripcionHabitacion { get; set; }
         public string EstadoHabitacion { get; set; } = string.Empty;
         public Guid SucursalGuid { get; set; }
@@ -22,4 +23,3 @@ namespace Servicio.Hotel.API.Models.Responses.Internal
         public string NombreTipoHabitacion { get; set; } = string.Empty;
     }
 }
-

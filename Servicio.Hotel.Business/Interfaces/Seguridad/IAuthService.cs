@@ -7,6 +7,7 @@ namespace Servicio.Hotel.Business.Interfaces.Seguridad
     public interface IAuthService
     {
         Task<LoginResponseDTO> LoginAsync(LoginRequestDTO loginRequest, CancellationToken ct = default);
+        Task<LoginResponseDTO> RegisterClienteAsync(RegisterClienteDTO registerRequest, CancellationToken ct = default);
         Task LogoutAsync(string refreshToken, CancellationToken ct = default);
         Task<LoginResponseDTO> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
         Task CambiarPasswordAsync(int idUsuario, string passwordActual, string passwordNuevo, string usuario, CancellationToken ct = default);

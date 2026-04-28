@@ -65,6 +65,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Alojamiento
                 Piso = habitacion.Piso,
                 CapacidadHabitacion = habitacion.CapacidadHabitacion,
                 PrecioBase = habitacion.PrecioBase,
+                ImagenUrl = habitacion.Url,
                 DescripcionHabitacion = habitacion.DescripcionHabitacion,
                 EstadoHabitacion = habitacion.EstadoHabitacion,
                 SucursalGuid = sucursal.SucursalGuid,

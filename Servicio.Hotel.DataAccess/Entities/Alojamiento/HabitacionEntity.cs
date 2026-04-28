@@ -12,6 +12,7 @@ namespace Servicio.Hotel.DataAccess.Entities.Alojamiento
         public int? Piso { get; set; }
         public int CapacidadHabitacion { get; set; }
         public decimal PrecioBase { get; set; }
+        public string? Url { get; set; }
         public string? DescripcionHabitacion { get; set; }
         public string EstadoHabitacion { get; set; }
         public bool EsEliminado { get; set; }

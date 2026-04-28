@@ -8,6 +8,7 @@ namespace Servicio.Hotel.Business.DTOs.Seguridad
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }
         public int ExpiresIn { get; set; }
+        public int? IdCliente { get; set; }
         public Guid UsuarioGuid { get; set; }
         public string Username { get; set; }
         public string Correo { get; set; }

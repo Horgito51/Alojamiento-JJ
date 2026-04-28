@@ -25,11 +25,13 @@ namespace Servicio.Hotel.Business.Services.Seguridad
         private static readonly ConcurrentDictionary<string, DateTime> RevokedRefreshTokens = new();
         private readonly IUsuarioDataService _usuarioDataService;
         private readonly IConfiguration _configuration;
+        private readonly IRolDataService _rolDataService;
 
-        public AuthService(IUsuarioDataService usuarioDataService, IConfiguration configuration)
+        public AuthService(IUsuarioDataService usuarioDataService, IConfiguration configuration, IRolDataService rolDataService)
         {
             _usuarioDataService = usuarioDataService;
             _configuration = configuration;
+            _rolDataService = rolDataService;
         }
 
         public async Task<LoginResponseDTO> LoginAsync(LoginRequestDTO loginRequest, CancellationToken ct = default)
@@ -68,6 +70,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 RefreshToken = refreshToken,
                 ExpiresIn = expirationMinutes * 60,
                 UsuarioGuid = usuario.UsuarioGuid,
+                IdCliente = usuario.IdCliente,
                 Username = usuario.Username,
                 Correo = usuario.Correo,
                 NombreCompleto = $"{usuario.Nombres} {usuario.Apellidos}",
@@ -188,6 +191,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 RefreshToken = newRefresh,
                 ExpiresIn = expirationMinutes * 60,
                 UsuarioGuid = usuario.UsuarioGuid,
+                IdCliente = usuario.IdCliente,
                 Username = usuario.Username,
                 Correo = usuario.Correo,
                 NombreCompleto = $"{usuario.Nombres} {usuario.Apellidos}",
@@ -273,6 +277,91 @@ namespace Servicio.Hotel.Business.Services.Seguridad
             var expiresUtc = GetTokenExpirationUtc(refreshToken) ?? DateTime.UtcNow.AddDays(7);
             RevokedRefreshTokens[HashToken(refreshToken)] = expiresUtc;
             CleanupRevokedRefreshTokens();
+        }
+
+        public async Task<LoginResponseDTO> RegisterClienteAsync(RegisterClienteDTO registerRequest, CancellationToken ct = default)
+        {
+            // Validar que las contraseñas coincidan
+            if (registerRequest.Password != registerRequest.ConfirmPassword)
+                throw new ValidationException("AUTH-007", "Las contraseñas no coinciden.");
+
+            // Validar datos básicos
+            if (string.IsNullOrWhiteSpace(registerRequest.Username))
+                throw new ValidationException("AUTH-008", "El nombre de usuario es obligatorio.");
+            if (string.IsNullOrWhiteSpace(registerRequest.Correo))
+                throw new ValidationException("AUTH-009", "El correo es obligatorio.");
+            if (string.IsNullOrWhiteSpace(registerRequest.Nombres))
+                throw new ValidationException("AUTH-010", "El nombre es obligatorio.");
+            if (string.IsNullOrWhiteSpace(registerRequest.Password) || registerRequest.Password.Length < 10)
+                throw new ValidationException("AUTH-011", "La contraseña debe tener al menos 10 caracteres.");
+
+            // Verificar que el usuario no exista
+            var existsByUsername = await _usuarioDataService.ExistsByUsernameAsync(registerRequest.Username, null, ct);
+            if (existsByUsername)
+                throw new BusinessException("AUTH-012", "El nombre de usuario ya está registrado.");
+
+            var existsByEmail = await _usuarioDataService.ExistsByCorreoAsync(registerRequest.Correo, null, ct);
+            if (existsByEmail)
+                throw new BusinessException("AUTH-013", "El correo ya está registrado.");
+
+            // 🔥 Obtener el rol CLIENTE (id = 4 - QUEMADO)
+            const int CLIENTE_ROLE_ID = 4;
+            var clienteRole = await GetClienteRoleAsync(ct);
+            if (clienteRole == null)
+                throw new NotFoundException("AUTH-014", "No se encontró el rol de cliente en el sistema.");
+
+            // Hash de contraseña
+            var (hash, salt) = PasswordHasher.HashPassword(registerRequest.Password);
+
+            // Crear el usuario público
+            var nuevoUsuario = new Servicio.Hotel.DataManagement.Seguridad.Models.UsuarioDataModel
+            {
+                Username = registerRequest.Username.Trim(),
+                Correo = registerRequest.Correo.Trim(),
+                Nombres = registerRequest.Nombres.Trim(),
+                Apellidos = registerRequest.Apellidos?.Trim() ?? "",
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                EstadoUsuario = "ACT",
+                Activo = true,
+                EsEliminado = false,
+                Roles = new() { clienteRole }
+            };
+
+            var usuarioCreado = await _usuarioDataService.AddAsync(nuevoUsuario, ct);
+
+            // Generar tokens
+            var roles = usuarioCreado.Roles?.Select(r => r.NombreRol).ToList() ?? new List<string>();
+            var token = GenerarTokenJWT(usuarioCreado, roles);
+            var refreshToken = GenerarRefreshTokenJWT(usuarioCreado);
+            var expirationMinutes = int.TryParse(_configuration["Jwt:ExpirationMinutes"], out var mins) ? mins : 60;
+
+            return new LoginResponseDTO
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                ExpiresIn = expirationMinutes * 60,
+                UsuarioGuid = usuarioCreado.UsuarioGuid,
+                IdCliente = usuarioCreado.IdCliente,
+                Username = usuarioCreado.Username,
+                Correo = usuarioCreado.Correo,
+                NombreCompleto = $"{usuarioCreado.Nombres} {usuarioCreado.Apellidos}".Trim(),
+                Roles = roles
+            };
+        }
+
+        private async Task<Servicio.Hotel.DataManagement.Seguridad.Models.RolDataModel> GetClienteRoleAsync(CancellationToken ct)
+        {
+            try
+            {
+                // 🔥 El rol CLIENTE SIEMPRE tiene id = 4
+                const int CLIENTE_ROLE_ID = 4;
+                return await _rolDataService.GetByIdAsync(CLIENTE_ROLE_ID, ct);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static bool IsRefreshTokenRevoked(string refreshToken)

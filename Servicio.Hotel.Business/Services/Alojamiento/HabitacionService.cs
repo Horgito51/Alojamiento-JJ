@@ -53,6 +53,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
                 Piso = habitacionCreateDto.Piso,
                 CapacidadHabitacion = habitacionCreateDto.CapacidadHabitacion,
                 PrecioBase = habitacionCreateDto.PrecioBase,
+                Url = habitacionCreateDto.Url ?? string.Empty,
                 DescripcionHabitacion = habitacionCreateDto.DescripcionHabitacion ?? string.Empty,
                 EstadoHabitacion = habitacionCreateDto.EstadoHabitacion
             };
@@ -74,6 +75,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
                 Piso = habitacionUpdateDto.Piso,
                 CapacidadHabitacion = habitacionUpdateDto.CapacidadHabitacion,
                 PrecioBase = habitacionUpdateDto.PrecioBase,
+                Url = habitacionUpdateDto.Url ?? string.Empty,
                 DescripcionHabitacion = habitacionUpdateDto.DescripcionHabitacion ?? string.Empty,
                 EstadoHabitacion = habitacionUpdateDto.EstadoHabitacion
             };
@@ -93,6 +95,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             existing.Piso = habitacionDto.Piso;
             existing.CapacidadHabitacion = habitacionDto.CapacidadHabitacion;
             existing.PrecioBase = habitacionDto.PrecioBase;
+            existing.Url = habitacionDto.Url;
             existing.DescripcionHabitacion = habitacionDto.DescripcionHabitacion;
             existing.EstadoHabitacion = habitacionDto.EstadoHabitacion;
 

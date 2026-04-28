@@ -65,6 +65,7 @@ namespace Servicio.Hotel.API.Models.Responses.Public
 
     public sealed class HabitacionPublicDto
     {
+        public int IdHabitacion { get; set; }
         public Guid HabitacionGuid { get; set; }
         public string NumeroHabitacion { get; set; } = string.Empty;
         public int? Piso { get; set; }
@@ -75,5 +76,6 @@ namespace Servicio.Hotel.API.Models.Responses.Public
         public Guid SucursalGuid { get; set; }
         public Guid TipoHabitacionGuid { get; set; }
         public string TipoHabitacionSlug { get; set; } = string.Empty;
+        public string? ImagenUrl { get; set; }
     }
 }

@@ -73,6 +73,7 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
             entity.Piso = model.Piso;
             entity.CapacidadHabitacion = model.CapacidadHabitacion;
             entity.PrecioBase = model.PrecioBase;
+            entity.Url = model.Url;
             entity.DescripcionHabitacion = model.DescripcionHabitacion;
             entity.EstadoHabitacion = model.EstadoHabitacion;
             entity.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";

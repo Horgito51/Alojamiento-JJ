@@ -19,6 +19,38 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             _tipoHabitacionService = tipoHabitacionService;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<HabitacionPublicDto>>> GetAll()
+        {
+            var habitaciones = await _habitacionService.GetAllAsync();
+            var sucursales = await _sucursalService.GetAllAsync();
+            var tipos = await _tipoHabitacionService.GetAllAsync();
+
+            var result = habitaciones
+                .Where(h => h.EstadoHabitacion == "DIS") // Only available rooms for marketplace
+                .Select(h => {
+                    var sucursal = sucursales.FirstOrDefault(s => s.IdSucursal == h.IdSucursal);
+                    var tipo = tipos.FirstOrDefault(t => t.IdTipoHabitacion == h.IdTipoHabitacion);
+                    return new HabitacionPublicDto
+                    {
+                        IdHabitacion = h.IdHabitacion,
+                        HabitacionGuid = h.HabitacionGuid,
+                        NumeroHabitacion = h.NumeroHabitacion,
+                        Piso = h.Piso,
+                        CapacidadHabitacion = h.CapacidadHabitacion,
+                        PrecioBase = h.PrecioBase,
+                        DescripcionHabitacion = h.DescripcionHabitacion,
+                        EstadoHabitacion = h.EstadoHabitacion,
+                        SucursalGuid = sucursal?.SucursalGuid ?? Guid.Empty,
+                        TipoHabitacionGuid = tipo?.TipoHabitacionGuid ?? Guid.Empty,
+                        TipoHabitacionSlug = tipo?.Slug ?? string.Empty,
+                        ImagenUrl = h.Url
+                    };
+                });
+
+            return Ok(result);
+        }
+
         [HttpGet("{habitacionGuid:guid}")]
         public async Task<ActionResult<HabitacionPublicDto>> GetByGuid(Guid habitacionGuid)
         {
@@ -28,6 +60,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
 
             var dto = new HabitacionPublicDto
             {
+                IdHabitacion = habitacion.IdHabitacion,
                 HabitacionGuid = habitacion.HabitacionGuid,
                 NumeroHabitacion = habitacion.NumeroHabitacion,
                 Piso = habitacion.Piso,
@@ -37,7 +70,8 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
                 EstadoHabitacion = habitacion.EstadoHabitacion,
                 SucursalGuid = sucursal.SucursalGuid,
                 TipoHabitacionGuid = tipo.TipoHabitacionGuid,
-                TipoHabitacionSlug = tipo.Slug
+                TipoHabitacionSlug = tipo.Slug,
+                ImagenUrl = habitacion.Url
             };
 
             return Ok(dto);
