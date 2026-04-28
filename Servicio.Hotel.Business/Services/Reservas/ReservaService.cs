@@ -7,9 +7,11 @@ using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
+using Servicio.Hotel.Business.Interfaces.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Reservas;
 using Servicio.Hotel.Business.Mappers.Reservas;
 using Servicio.Hotel.Business.Validators.Reservas;
+using Servicio.Hotel.DataManagement.UnitOfWork;
 using Servicio.Hotel.DataManagement.Reservas.Interfaces;
 
 namespace Servicio.Hotel.Business.Services.Reservas
@@ -19,15 +21,21 @@ namespace Servicio.Hotel.Business.Services.Reservas
         private readonly IReservaDataService _reservaDataService;
         private readonly ITarifaService _tarifaService;
         private readonly IHabitacionService _habitacionService;
+        private readonly IFacturaService _facturaService;
+        private readonly IUnitOfWork _unitOfWork;
 
         public ReservaService(
             IReservaDataService reservaDataService,
             ITarifaService tarifaService,
-            IHabitacionService habitacionService)
+            IHabitacionService habitacionService,
+            IFacturaService facturaService,
+            IUnitOfWork unitOfWork)
         {
             _reservaDataService = reservaDataService;
             _tarifaService = tarifaService;
             _habitacionService = habitacionService;
+            _facturaService = facturaService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<ReservaDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -124,6 +132,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
                 throw new ValidationException("RES-PRECIO-001", "La fecha de fin debe ser posterior a la fecha de inicio.");
 
             var habitacion = await _habitacionService.GetByIdAsync(idHabitacion, ct);
+            EnsureHabitacionReservable(habitacion);
             var tarifa = await _tarifaService.GetTarifaVigenteRangoOrDefaultAsync(
                 habitacion.IdSucursal,
                 habitacion.IdTipoHabitacion,
@@ -218,6 +227,9 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var habitacionesConConflicto = new HashSet<int>();
             foreach (var detalle in existing.Habitaciones)
             {
+                var habitacion = await _habitacionService.GetByIdAsync(detalle.IdHabitacion, ct);
+                EnsureHabitacionReservable(habitacion);
+
                 var solapa = await _reservaDataService.ExisteSolapamientoAsync(
                     detalle.IdHabitacion,
                     detalle.FechaInicio,
@@ -235,7 +247,11 @@ namespace Servicio.Hotel.Business.Services.Reservas
                 throw new ConflictException($"No se puede confirmar la reserva: las habitaciones {ids} ya estan ocupadas en el rango {existing.FechaInicio:yyyy-MM-dd} a {existing.FechaFin:yyyy-MM-dd}.");
             }
 
-            await _reservaDataService.ConfirmarAsync(idReserva, usuario, ct);
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await _reservaDataService.ConfirmarAsync(idReserva, usuario, ct);
+                await _facturaService.GenerarFacturaReservaAsync(idReserva, usuario, ct);
+            }, ct);
         }
 
         public async Task CancelarAsync(int idReserva, string motivo, string usuario, CancellationToken ct = default)
@@ -271,6 +287,13 @@ namespace Servicio.Hotel.Business.Services.Reservas
             if (fechaFin <= fechaInicio)
                 throw new ValidationException("RES-009", "La fecha de fin debe ser posterior a la fecha de inicio.");
             return await _reservaDataService.ConfirmarReservaHabitacionAsync(idReserva, idHabitacion, idTarifa, fechaInicio, fechaFin, numAdultos, numNinos, precioNoche, usuario, ct);
+        }
+
+        private static void EnsureHabitacionReservable(Servicio.Hotel.Business.DTOs.Alojamiento.HabitacionDTO habitacion)
+        {
+            var estado = (habitacion.EstadoHabitacion ?? string.Empty).Trim().ToUpperInvariant();
+            if (estado is "MNT" or "FDS" or "OCU" or "INA")
+                throw new ConflictException($"La habitacion {habitacion.IdHabitacion} no esta disponible para reservar. Estado actual: {estado}.");
         }
     }
 }

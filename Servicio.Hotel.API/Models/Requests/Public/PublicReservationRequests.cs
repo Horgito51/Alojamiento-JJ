@@ -64,6 +64,8 @@ namespace Servicio.Hotel.API.Models.Requests.Public
     {
         public Guid ReservaGuid { get; set; }
         public decimal? Monto { get; set; }
+        public string? TokenPago { get; set; }
+        public string? Referencia { get; set; }
 
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? ExtraProperties { get; set; }

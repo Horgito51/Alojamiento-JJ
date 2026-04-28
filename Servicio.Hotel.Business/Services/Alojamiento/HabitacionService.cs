@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using Servicio.Hotel.Business.Mappers.Alojamiento;
 using Servicio.Hotel.Business.Validators.Alojamiento;
+using Servicio.Hotel.DataAccess.Context;
 using Servicio.Hotel.DataManagement.Alojamiento.Interfaces;
 
 namespace Servicio.Hotel.Business.Services.Alojamiento
@@ -17,11 +19,13 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
     {
         private readonly IHabitacionDataService _habitacionDataService;
         private readonly ITarifaService _tarifaService;
+        private readonly ServicioHotelDbContext _context;
 
-        public HabitacionService(IHabitacionDataService habitacionDataService, ITarifaService tarifaService)
+        public HabitacionService(IHabitacionDataService habitacionDataService, ITarifaService tarifaService, ServicioHotelDbContext context)
         {
             _habitacionDataService = habitacionDataService;
             _tarifaService = tarifaService;
+            _context = context;
         }
 
         private async Task<decimal> GetPrecioVigente(int idSucursal, int idTipoHabitacion, decimal precioBaseActual)
@@ -116,6 +120,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             var existing = await _habitacionDataService.GetByIdAsync(id, ct);
             if (existing == null)
                 throw new NotFoundException("HAB-004", $"No se encontró la habitación con ID {id}.");
+            await EnsureSinReservasActivasAsync(id, ct);
             await _habitacionDataService.DeleteAsync(id, ct);
         }
 
@@ -164,12 +169,26 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         public async Task<IEnumerable<HabitacionDTO>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default)
         {
             var dataModels = await _habitacionDataService.GetDisponiblesAsync(idSucursal, inicio, fin, ct);
-            var items = dataModels.ToDtoList();
+            var estadosNoReservables = new[] { "MNT", "FDS", "OCU", "INA" };
+            var items = dataModels
+                .ToDtoList()
+                .Where(h => !estadosNoReservables.Contains((h.EstadoHabitacion ?? string.Empty).Trim().ToUpperInvariant()))
+                .ToList();
             foreach (var item in items)
             {
                 item.PrecioBase = await GetPrecioVigente(item.IdSucursal, item.IdTipoHabitacion, item.PrecioBase);
             }
             return items;
+        }
+
+        private async Task EnsureSinReservasActivasAsync(int idHabitacion, CancellationToken ct)
+        {
+            var estadosActivos = new[] { "PEN", "CON" };
+            var tieneReservasActivas = await _context.ReservasHabitaciones
+                .AnyAsync(rh => rh.IdHabitacion == idHabitacion && estadosActivos.Contains(rh.Reserva.EstadoReserva), ct);
+
+            if (tieneReservasActivas)
+                throw new ConflictException("No se puede eliminar la habitacion porque tiene reservas activas asociadas.");
         }
     }
 }

@@ -81,6 +81,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 GuidFactura = Guid.NewGuid(),
                 IdReserva = reserva.IdReserva,
                 IdCliente = reserva.IdCliente,
+                IdSucursal = reserva.IdSucursal,
                 TipoFactura = "RESERVA",
                 NumeroFactura = $"RES-{reserva.CodigoReserva}",
                 FechaEmision = DateTime.UtcNow,
@@ -89,7 +90,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 Total = reserva.TotalReserva,
                 DescuentoTotal = reserva.DescuentoAplicado,
                 SaldoPendiente = reserva.TotalReserva,
-                Estado = "PEN",
+                Estado = "EMI",
                 CreadoPorUsuario = usuario,
                 FechaRegistroUtc = DateTime.UtcNow,
                 ServicioOrigen = "facturacion-service"
@@ -140,6 +141,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 GuidFactura = Guid.NewGuid(),
                 IdReserva = reserva.IdReserva,
                 IdCliente = reserva.IdCliente,
+                IdSucursal = reserva.IdSucursal,
                 TipoFactura = "FINAL",
                 NumeroFactura = $"FAC-{reserva.CodigoReserva}",
                 FechaEmision = DateTime.UtcNow,
@@ -148,7 +150,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 Total = reserva.TotalReserva,
                 DescuentoTotal = reserva.DescuentoAplicado,
                 SaldoPendiente = reserva.TotalReserva,
-                Estado = "PEN",
+                Estado = "EMI",
                 CreadoPorUsuario = usuario,
                 FechaRegistroUtc = DateTime.UtcNow,
                 ServicioOrigen = "facturacion-service"

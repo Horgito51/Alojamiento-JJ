@@ -60,7 +60,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Pagos
         public async Task<ActionResult<PagoSimuladoDTO>> Simular([FromBody] PagoSimularRequest request)
         {
             var usuario = User.Identity?.Name ?? "Cliente";
-            var result = await _pagoService.SimularPagoAsync(request.IdReserva, request.Monto, usuario);
+            var result = await _pagoService.SimularPagoAsync(request.IdReserva, request.Monto, usuario, request.TokenPago, request.Referencia);
             return Ok(result);
         }
 
@@ -75,7 +75,12 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Pagos
 
             var reserva = await _reservaService.GetByGuidAsync(request.ReservaGuid);
             var usuario = User.Identity?.Name ?? "API_PUBLICA";
-            var result = await _pagoService.SimularPagoAsync(reserva.IdReserva, request.Monto, usuario);
+            if (!string.Equals(reserva.EstadoReserva, "CON", StringComparison.OrdinalIgnoreCase))
+            {
+                await _reservaService.ConfirmarAsync(reserva.IdReserva, usuario);
+            }
+
+            var result = await _pagoService.SimularPagoAsync(reserva.IdReserva, request.Monto, usuario, request.TokenPago, request.Referencia);
 
             return Ok(new PagoSimuladoPublicDto
             {

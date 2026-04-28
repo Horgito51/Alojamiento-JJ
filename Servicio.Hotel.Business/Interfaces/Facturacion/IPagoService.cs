@@ -18,6 +18,6 @@ namespace Servicio.Hotel.Business.Interfaces.Facturacion
 
         Task UpdateEstadoAsync(int idPago, string nuevoEstado, string usuario, CancellationToken ct = default);
         Task<decimal> GetTotalPagadoPorFacturaAsync(int idFactura, CancellationToken ct = default);
-        Task<PagoSimuladoDTO> SimularPagoAsync(int idReserva, decimal? monto, string usuario, CancellationToken ct = default);
+        Task<PagoSimuladoDTO> SimularPagoAsync(int idReserva, decimal? monto, string usuario, string? tokenPago = null, string? referencia = null, CancellationToken ct = default);
     }
 }

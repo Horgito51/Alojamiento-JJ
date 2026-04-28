@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Servicio.Hotel.API.Models.Settings;
+using Servicio.Hotel.API.Services;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Hospedaje;
@@ -46,6 +48,10 @@ namespace Servicio.Hotel.API.Extensions
         {
             services.AddDbContext<ServicioHotelDbContext>(options =>
                 options.UseSqlServer(connectionString));
+
+            services.AddOptions<PaymentGatewaySettings>()
+                .BindConfiguration("PaymentGateway");
+            services.AddHttpClient<IPaymentGateway, HttpPaymentGateway>();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 

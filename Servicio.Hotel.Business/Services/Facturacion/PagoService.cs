@@ -9,6 +9,7 @@ using Servicio.Hotel.Business.Interfaces.Reservas;
 using Servicio.Hotel.Business.Mappers.Facturacion;
 using Servicio.Hotel.Business.Validators.Facturacion;
 using Servicio.Hotel.DataManagement.Facturacion.Interfaces;
+using Servicio.Hotel.DataManagement.UnitOfWork;
 
 namespace Servicio.Hotel.Business.Services.Facturacion
 {
@@ -16,11 +17,22 @@ namespace Servicio.Hotel.Business.Services.Facturacion
     {
         private readonly IPagoDataService _pagoDataService;
         private readonly IReservaService _reservaService;
+        private readonly IFacturaService _facturaService;
+        private readonly IPaymentGateway _paymentGateway;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PagoService(IPagoDataService pagoDataService, IReservaService reservaService)
+        public PagoService(
+            IPagoDataService pagoDataService,
+            IReservaService reservaService,
+            IFacturaService facturaService,
+            IPaymentGateway paymentGateway,
+            IUnitOfWork unitOfWork)
         {
             _pagoDataService = pagoDataService;
             _reservaService = reservaService;
+            _facturaService = facturaService;
+            _paymentGateway = paymentGateway;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PagoDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -96,29 +108,91 @@ namespace Servicio.Hotel.Business.Services.Facturacion
             return await _pagoDataService.GetTotalPagadoPorFacturaAsync(idFactura, ct);
         }
 
-        public async Task<PagoSimuladoDTO> SimularPagoAsync(int idReserva, decimal? monto, string usuario, CancellationToken ct = default)
+        public async Task<PagoSimuladoDTO> SimularPagoAsync(int idReserva, decimal? monto, string usuario, string? tokenPago = null, string? referencia = null, CancellationToken ct = default)
         {
             if (idReserva <= 0)
                 throw new ValidationException("PAG-005", "El idReserva es obligatorio.");
 
             var reserva = await _reservaService.GetByIdAsync(idReserva, ct);
-            var montoFinal = monto ?? reserva.SaldoPendiente;
+            var facturas = await _facturaService.GetByFiltroAsync(new FacturaFiltroDTO
+            {
+                IdReserva = idReserva,
+                TipoFactura = "RESERVA",
+                EsEliminado = false
+            }, 1, 10, ct);
+
+            var factura = facturas.Items
+                .Where(f => f.Estado != "ANU")
+                .OrderByDescending(f => f.FechaEmision)
+                .FirstOrDefault();
+
+            if (factura == null)
+                throw new ValidationException("PAG-008", "La reserva no tiene una factura emitida para registrar el pago.");
+
+            var montoFinal = monto ?? factura.SaldoPendiente;
 
             if (montoFinal <= 0)
                 throw new ValidationException("PAG-006", "El monto del pago debe ser mayor a cero.");
 
-            await _reservaService.UpdateAsync(new Servicio.Hotel.Business.DTOs.Reservas.ReservaUpdateDTO
+            if (montoFinal > factura.SaldoPendiente)
+                throw new ValidationException("PAG-009", "El monto del pago no puede superar el saldo pendiente de la factura.");
+
+            var gatewayResult = await _paymentGateway.ProcesarPagoAsync(new PaymentGatewayRequest
             {
                 IdReserva = reserva.IdReserva,
-                FechaInicio = reserva.FechaInicio,
-                FechaFin = reserva.FechaFin,
-                SubtotalReserva = reserva.SubtotalReserva,
-                ValorIva = reserva.ValorIva,
-                TotalReserva = reserva.TotalReserva,
-                DescuentoAplicado = reserva.DescuentoAplicado,
-                SaldoPendiente = 0,
-                EstadoReserva = "CON",
-                Observaciones = reserva.Observaciones
+                IdFactura = factura.IdFactura,
+                CodigoReserva = reserva.CodigoReserva,
+                Monto = montoFinal,
+                Moneda = string.IsNullOrWhiteSpace(factura.Moneda) ? "USD" : factura.Moneda,
+                Usuario = usuario,
+                Referencia = referencia ?? $"RES-{reserva.CodigoReserva}",
+                TokenPago = tokenPago
+            }, ct);
+
+            var estadoPago = gatewayResult.Aprobado ? "APR" : "REC";
+
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await CreateAsync(new PagoDTO
+                {
+                    IdFactura = factura.IdFactura,
+                    IdReserva = reserva.IdReserva,
+                    Monto = montoFinal,
+                    MetodoPago = "TARJETA",
+                    EsPagoElectronico = true,
+                    ProveedorPasarela = "EXTERNAL",
+                    TransaccionExterna = string.IsNullOrWhiteSpace(gatewayResult.TransaccionExterna)
+                        ? $"GW-{Guid.NewGuid():N}"
+                        : gatewayResult.TransaccionExterna,
+                    CodigoAutorizacion = gatewayResult.CodigoAutorizacion,
+                    Referencia = referencia ?? $"RES-{reserva.CodigoReserva}",
+                    EstadoPago = estadoPago,
+                    FechaPagoUtc = DateTime.UtcNow,
+                    Moneda = string.IsNullOrWhiteSpace(factura.Moneda) ? "USD" : factura.Moneda,
+                    TipoCambio = 1m,
+                    RespuestaPasarela = gatewayResult.RespuestaRaw,
+                    CreadoPorUsuario = usuario
+                }, ct);
+
+                if (gatewayResult.Aprobado)
+                {
+                    var nuevoSaldoFactura = Math.Max(0, factura.SaldoPendiente - montoFinal);
+                    await _facturaService.UpdateSaldoPendienteAsync(factura.IdFactura, nuevoSaldoFactura, ct);
+
+                    await _reservaService.UpdateAsync(new Servicio.Hotel.Business.DTOs.Reservas.ReservaUpdateDTO
+                    {
+                        IdReserva = reserva.IdReserva,
+                        FechaInicio = reserva.FechaInicio,
+                        FechaFin = reserva.FechaFin,
+                        SubtotalReserva = reserva.SubtotalReserva,
+                        ValorIva = reserva.ValorIva,
+                        TotalReserva = reserva.TotalReserva,
+                        DescuentoAplicado = reserva.DescuentoAplicado,
+                        SaldoPendiente = Math.Max(0, reserva.SaldoPendiente - montoFinal),
+                        EstadoReserva = "CON",
+                        Observaciones = reserva.Observaciones
+                    }, ct);
+                }
             }, ct);
 
             return new PagoSimuladoDTO
@@ -126,11 +200,11 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                 IdReserva = reserva.IdReserva,
                 CodigoReserva = reserva.CodigoReserva,
                 Monto = montoFinal,
-                EstadoPago = "APR",
+                EstadoPago = estadoPago,
                 EstadoReserva = "CON",
-                TransaccionExterna = $"SIM-{Guid.NewGuid():N}",
-                CodigoAutorizacion = Guid.NewGuid().ToString("N")[..10].ToUpperInvariant(),
-                Mensaje = "Pago realizado con exito.",
+                TransaccionExterna = gatewayResult.TransaccionExterna,
+                CodigoAutorizacion = gatewayResult.CodigoAutorizacion,
+                Mensaje = gatewayResult.Mensaje,
                 FechaPagoUtc = DateTime.UtcNow
             };
         }

@@ -335,6 +335,8 @@ namespace Servicio.Hotel.API.Models.Requests.Internal
     {
         public int IdReserva { get; set; }
         public decimal? Monto { get; set; }
+        public string? TokenPago { get; set; }
+        public string? Referencia { get; set; }
     }
 
     public class ValoracionCreateRequest

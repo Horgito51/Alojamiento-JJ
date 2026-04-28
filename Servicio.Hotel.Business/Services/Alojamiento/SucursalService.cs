@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using Servicio.Hotel.Business.Mappers.Alojamiento;
 using Servicio.Hotel.Business.Validators.Alojamiento;
+using Servicio.Hotel.DataAccess.Context;
 using Servicio.Hotel.DataManagement.Alojamiento.Interfaces;
 using Servicio.Hotel.DataManagement.Alojamiento.Models;
 
@@ -16,10 +18,12 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
     public class SucursalService : ISucursalService
     {
         private readonly ISucursalDataService _dataService;
+        private readonly ServicioHotelDbContext _context;
 
-        public SucursalService(ISucursalDataService dataService)
+        public SucursalService(ISucursalDataService dataService, ServicioHotelDbContext context)
         {
             _dataService = dataService;
+            _context = context;
         }
 
         public async Task<IEnumerable<SucursalDTO>> GetAllAsync(string? estado = null, CancellationToken ct = default)
@@ -43,6 +47,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         public async Task<SucursalDTO> CreateAsync(SucursalCreateDTO dto, CancellationToken ct = default)
         {
             SucursalValidator.ValidateCreate(dto);
+            await EnsureNombreUnicoAsync(dto.NombreSucursal, null, ct);
             var created = await _dataService.AddAsync(dto.ToDataModel()!, ct);
             return created.ToDto()!;
         }
@@ -50,6 +55,8 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         public async Task UpdateAsync(SucursalUpdateDTO dto, CancellationToken ct = default)
         {
             _ = await GetByIdAsync(dto.IdSucursal, ct);
+            SucursalValidator.ValidateUpdate(dto);
+            await EnsureNombreUnicoAsync(dto.NombreSucursal, dto.IdSucursal, ct);
             await _dataService.UpdateAsync(dto.ToDataModel()!, ct);
         }
 
@@ -86,6 +93,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
         public async Task DeleteAsync(int id, CancellationToken ct = default)
         {
             _ = await GetByIdAsync(id, ct);
+            await EnsureSinHabitacionesActivasAsync(id, ct);
             await _dataService.DeleteAsync(id, ct);
         }
 
@@ -95,7 +103,29 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             if (existing == null)
                 throw new NotFoundException("SUC-001", $"No se encontrÃ³ la sucursal con GUID {guid}.");
 
+            await EnsureSinHabitacionesActivasAsync(existing.IdSucursal, ct);
             await _dataService.DeleteAsync(existing.IdSucursal, ct);
+        }
+
+        private async Task EnsureNombreUnicoAsync(string nombreSucursal, int? idSucursal, CancellationToken ct)
+        {
+            var normalized = (nombreSucursal ?? string.Empty).Trim().ToUpperInvariant();
+            var exists = await _context.Sucursales.AnyAsync(s =>
+                s.NombreSucursal.Trim().ToUpper() == normalized &&
+                (!idSucursal.HasValue || s.IdSucursal != idSucursal.Value), ct);
+
+            if (exists)
+                throw new ConflictException("Ya existe una sucursal registrada con ese nombre.");
+        }
+
+        private async Task EnsureSinHabitacionesActivasAsync(int idSucursal, CancellationToken ct)
+        {
+            var tieneHabitacionesActivas = await _context.Habitaciones.AnyAsync(h =>
+                h.IdSucursal == idSucursal &&
+                h.EstadoHabitacion != "INA", ct);
+
+            if (tieneHabitacionesActivas)
+                throw new ConflictException("No se puede eliminar la sucursal porque tiene habitaciones activas asociadas.");
         }
     }
 }

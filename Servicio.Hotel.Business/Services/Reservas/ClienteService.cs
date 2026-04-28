@@ -1,12 +1,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Servicio.Hotel.Business.Common;
 using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Reservas;
 using Servicio.Hotel.Business.Mappers.Reservas;
 using Servicio.Hotel.Business.Validators.Reservas;
+using Servicio.Hotel.DataAccess.Context;
 using Servicio.Hotel.DataManagement.Reservas.Interfaces;
 
 namespace Servicio.Hotel.Business.Services.Reservas
@@ -14,10 +16,12 @@ namespace Servicio.Hotel.Business.Services.Reservas
     public class ClienteService : IClienteService
     {
         private readonly IClienteDataService _clienteDataService;
+        private readonly ServicioHotelDbContext _context;
 
-        public ClienteService(IClienteDataService clienteDataService)
+        public ClienteService(IClienteDataService clienteDataService, ServicioHotelDbContext context)
         {
             _clienteDataService = clienteDataService;
+            _context = context;
         }
 
         public async Task<ClienteDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -61,6 +65,13 @@ namespace Servicio.Hotel.Business.Services.Reservas
 
             ClienteValidator.Validate(clienteDto);
 
+            var identificacionExistente = await _clienteDataService.GetByIdentificacionAsync(
+                clienteCreateDto.TipoIdentificacion,
+                clienteCreateDto.NumeroIdentificacion,
+                ct);
+            if (identificacionExistente != null)
+                throw new ValidationException("CLI-009", "Ya existe un cliente registrado con esa identificacion.");
+
             // Verificar correo duplicado antes de llegar a la BD
             var existente = await _clienteDataService.GetByCorreoAsync(clienteCreateDto.Correo, ct);
             if (existente != null)
@@ -76,6 +87,23 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var existing = await _clienteDataService.GetByIdAsync(clienteUpdateDto.IdCliente, ct);
             if (existing == null)
                 throw new NotFoundException("CLI-003", $"No se encontró el cliente con ID {clienteUpdateDto.IdCliente}.");
+
+            ClienteValidator.Validate(new ClienteDTO
+            {
+                IdCliente = existing.IdCliente,
+                TipoIdentificacion = existing.TipoIdentificacion,
+                NumeroIdentificacion = existing.NumeroIdentificacion,
+                Nombres = clienteUpdateDto.Nombres,
+                Apellidos = clienteUpdateDto.Apellidos,
+                RazonSocial = clienteUpdateDto.RazonSocial ?? string.Empty,
+                Correo = clienteUpdateDto.Correo,
+                Telefono = clienteUpdateDto.Telefono ?? string.Empty,
+                Estado = clienteUpdateDto.Estado
+            });
+
+            var correoExistente = await _clienteDataService.GetByCorreoAsync(clienteUpdateDto.Correo, ct);
+            if (correoExistente != null && correoExistente.IdCliente != clienteUpdateDto.IdCliente)
+                throw new ValidationException("CLI-011", $"Ya existe un cliente registrado con el correo '{clienteUpdateDto.Correo}'.");
 
             existing.Nombres = clienteUpdateDto.Nombres;
             existing.Apellidos = clienteUpdateDto.Apellidos;
@@ -93,6 +121,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var existing = await _clienteDataService.GetByIdAsync(id, ct);
             if (existing == null)
                 throw new NotFoundException("CLI-004", $"No se encontró el cliente con ID {id}.");
+            await EnsureSinReservasActivasAsync(id, ct);
             await _clienteDataService.DeleteAsync(id, ct);
         }
 
@@ -117,7 +146,18 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var existing = await _clienteDataService.GetByIdAsync(id, ct);
             if (existing == null)
                 throw new NotFoundException("CLI-007", $"No se encontró el cliente con ID {id}.");
+            await EnsureSinReservasActivasAsync(id, ct);
             await _clienteDataService.InhabilitarAsync(id, motivo, usuario, ct);
+        }
+
+        private async Task EnsureSinReservasActivasAsync(int idCliente, CancellationToken ct)
+        {
+            var estadosActivos = new[] { "PEN", "CON" };
+            var tieneReservasActivas = await _context.Reservas.AnyAsync(r =>
+                r.IdCliente == idCliente && estadosActivos.Contains(r.EstadoReserva), ct);
+
+            if (tieneReservasActivas)
+                throw new ConflictException("No se puede eliminar o inhabilitar el cliente porque tiene reservas activas asociadas.");
         }
     }
 }
