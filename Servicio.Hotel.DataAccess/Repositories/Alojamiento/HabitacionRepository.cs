@@ -63,8 +63,8 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
                 .Where(rh => rh.Reserva.IdSucursal == idSucursal &&
                              rh.Reserva.EstadoReserva != "CAN" && 
                              rh.Reserva.EstadoReserva != "ANU" &&
-                             rh.FechaInicio < fin && 
-                             rh.FechaFin > inicio)
+                             rh.FechaInicio.Date < fin.Date && 
+                             rh.FechaFin.Date > inicio.Date)
                 .Select(rh => rh.IdHabitacion)
                 .Distinct()
                 .ToListAsync(ct);

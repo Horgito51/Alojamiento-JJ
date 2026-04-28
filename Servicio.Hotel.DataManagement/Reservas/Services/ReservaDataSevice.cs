@@ -126,6 +126,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                 if (string.IsNullOrWhiteSpace(entity.ServicioOrigen)) entity.ServicioOrigen = "reservas-service";
                 if (string.IsNullOrWhiteSpace(entity.CodigoReserva))
                     entity.CodigoReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+                entity.FechaInicio = entity.FechaInicio.Date;
+                entity.FechaFin = entity.FechaFin.Date;
                 entity.FechaRegistroUtc = DateTime.UtcNow;
                 entity.FechaReservaUtc = DateTime.UtcNow;
 

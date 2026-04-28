@@ -53,9 +53,7 @@ namespace Servicio.Hotel.API.Middleware
                 ArgumentException argEx => (HttpStatusCode.BadRequest, isDevelopment ? argEx.Message : "Solicitud inválida.", null),
                 InvalidOperationException invEx => (HttpStatusCode.Conflict, invEx.Message, null),
                 _ => (HttpStatusCode.InternalServerError,
-                      isDevelopment
-                          ? $"{exception.GetType().Name}: {exception.Message}{(exception.InnerException != null ? $" | Inner: {exception.InnerException.Message}" : "")}"
-                          : "Ha ocurrido un error interno en el servidor.",
+                      $"{exception.GetType().Name}: {exception.Message}{(exception.InnerException != null ? $" | Inner: {exception.InnerException.Message}" : "")}",
                       null)
             };
 
@@ -77,6 +75,7 @@ namespace Servicio.Hotel.API.Middleware
             var json = JsonSerializer.Serialize(errorResponse, jsonOptions);
             await context.Response.WriteAsync(json);
         }
+
         private static (HttpStatusCode statusCode, string message, Dictionary<string, string[]>? validationErrors) ParseDbUpdateExceptionWithStatus(DbUpdateException ex)
         {
             var inner = ex.InnerException?.Message ?? ex.Message;
@@ -114,7 +113,6 @@ namespace Servicio.Hotel.API.Middleware
 
             if (inner.Contains("UQ_") || inner.Contains("UNIQUE KEY") || inner.Contains("duplicate key"))
             {
-                // Extraer el valor duplicado si está disponible
                 if (inner.Contains("duplicate key value is"))
                 {
                     var start = inner.IndexOf('(');

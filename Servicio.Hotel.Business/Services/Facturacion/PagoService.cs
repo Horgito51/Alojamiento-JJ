@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -102,7 +102,7 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                 TotalReserva = reserva.TotalReserva,
                 DescuentoAplicado = reserva.DescuentoAplicado,
                 SaldoPendiente = 0,
-                EstadoReserva = "APR",
+                EstadoReserva = "CON",
                 Observaciones = reserva.Observaciones
             }, ct);
 
@@ -112,7 +112,7 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                 CodigoReserva = reserva.CodigoReserva,
                 Monto = montoFinal,
                 EstadoPago = "APR",
-                EstadoReserva = "APR",
+                EstadoReserva = "CON",
                 TransaccionExterna = $"SIM-{Guid.NewGuid():N}",
                 CodigoAutorizacion = Guid.NewGuid().ToString("N")[..10].ToUpperInvariant(),
                 Mensaje = "Pago realizado con exito.",
