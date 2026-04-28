@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +21,7 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Interfaces
         Task<DataPagedResult<HabitacionDataModel>> GetByFiltroAsync(HabitacionFiltroDataModel filtro, int pageNumber, int pageSize, CancellationToken ct = default);
         Task<IEnumerable<HabitacionDataModel>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
         Task<IEnumerable<HabitacionDataModel>> GetByTipoHabitacionAsync(int idTipoHabitacion, CancellationToken ct = default);
+        Task<IEnumerable<HabitacionDataModel>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default);
         Task UpdateEstadoAsync(int id, string nuevoEstado, string usuario, CancellationToken ct = default);
     }
 }

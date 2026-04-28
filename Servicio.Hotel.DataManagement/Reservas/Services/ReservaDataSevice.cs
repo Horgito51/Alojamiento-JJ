@@ -176,8 +176,8 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                         model.FechaFin,
                         ct);
 
-                    if (tarifa == null)
-                        throw new DomainException($"No existe tarifa vigente para la habitación {room.IdHabitacion} en el rango de fechas indicado.");
+                    int? idTarifa = tarifa?.IdTarifa;
+                    decimal precioNoche = tarifa?.PrecioPorNoche ?? habitacion.PrecioBase;
 
                     var numAdultos = room.NumAdultos > 0 ? room.NumAdultos : 1;
                     var numNinos = room.NumNinos >= 0 ? room.NumNinos : 0;
@@ -185,12 +185,12 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
                     await _reservaRepository.ConfirmarReservaHabitacionAsync(
                         createdReservaId,
                         room.IdHabitacion,
-                        tarifa.IdTarifa,
+                        idTarifa,
                         model.FechaInicio,
                         model.FechaFin,
                         numAdultos,
                         numNinos,
-                        tarifa.PrecioPorNoche,
+                        precioNoche,
                         string.IsNullOrWhiteSpace(model.CreadoPorUsuario) ? "Sistema" : model.CreadoPorUsuario,
                         ct);
                 }

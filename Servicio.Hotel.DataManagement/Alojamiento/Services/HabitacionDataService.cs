@@ -67,7 +67,6 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
             var entity = await _habitacionRepository.GetByIdAsync(model.IdHabitacion, ct);
             if (entity == null) return;
 
-            // Actualizamos los campos que pueden cambiar
             entity.IdTipoHabitacion = model.IdTipoHabitacion;
             entity.NumeroHabitacion = model.NumeroHabitacion;
             entity.Piso = model.Piso;
@@ -132,6 +131,12 @@ namespace Servicio.Hotel.DataManagement.Alojamiento.Services
         {
             await _habitacionRepository.UpdateEstadoAsync(id, nuevoEstado, usuario, ct);
             await _unitOfWork.SaveChangesAsync(ct);
+        }
+
+        public async Task<IEnumerable<HabitacionDataModel>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default)
+        {
+            var entities = await _habitacionRepository.GetDisponiblesAsync(idSucursal, inicio, fin, ct);
+            return entities.ToModelList();
         }
     }
 }

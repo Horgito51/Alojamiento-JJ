@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,5 +23,6 @@ namespace Servicio.Hotel.DataAccess.Repositories.Interfaces.Alojamiento
         // Nuevos métodos para consultas
         Task<IEnumerable<HabitacionEntity>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
         Task<IEnumerable<HabitacionEntity>> GetByTipoHabitacionAsync(int idTipoHabitacion, CancellationToken ct = default);
+        Task<IEnumerable<HabitacionEntity>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default);
     }
 }

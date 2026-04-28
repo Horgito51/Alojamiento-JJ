@@ -23,9 +23,22 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HabitacionPublicDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<HabitacionPublicDto>>> GetAll(
+            [FromQuery] DateTime? fechaInicio = null, 
+            [FromQuery] DateTime? fechaFin = null,
+            [FromQuery] int sucursalId = 1)
         {
-            var habitaciones = await _habitacionService.GetAllAsync();
+            IEnumerable<HabitacionDTO> habitaciones;
+
+            if (fechaInicio.HasValue && fechaFin.HasValue)
+            {
+                habitaciones = await _habitacionService.GetDisponiblesAsync(sucursalId, fechaInicio.Value, fechaFin.Value);
+            }
+            else
+            {
+                habitaciones = await _habitacionService.GetBySucursalAsync(sucursalId);
+            }
+
             var sucursales = await _sucursalService.GetAllAsync();
             var tipos = await _tipoHabitacionService.GetAllAsync();
             

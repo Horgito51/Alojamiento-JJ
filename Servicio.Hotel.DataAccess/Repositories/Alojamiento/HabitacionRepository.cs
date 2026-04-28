@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,5 +52,27 @@ namespace Servicio.Hotel.DataAccess.Repositories.Alojamiento
 
         public async Task<IEnumerable<HabitacionEntity>> GetByTipoHabitacionAsync(int idTipoHabitacion, CancellationToken ct = default)
             => await _dbSet.Where(h => h.IdTipoHabitacion == idTipoHabitacion).ToListAsync(ct);
+
+        public async Task<IEnumerable<HabitacionEntity>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default)
+        {
+            // Habitaciones de la sucursal que estén en estado DIS (Disponible) y no eliminadas
+            var habitacionesSucursal = _dbSet.Where(h => h.IdSucursal == idSucursal && h.EstadoHabitacion == "DIS" && !h.EsEliminado);
+
+            // Habitaciones que tienen al menos una reserva que se solapa y NO está cancelada/anulada
+            var habitacionesOcupadasIds = await _context.ReservasHabitaciones
+                .Where(rh => rh.Reserva.IdSucursal == idSucursal &&
+                             rh.Reserva.EstadoReserva != "CAN" && 
+                             rh.Reserva.EstadoReserva != "ANU" &&
+                             rh.FechaInicio < fin && 
+                             rh.FechaFin > inicio)
+                .Select(rh => rh.IdHabitacion)
+                .Distinct()
+                .ToListAsync(ct);
+
+            // Retornar las de la sucursal que NO estén en la lista de ocupadas
+            return await habitacionesSucursal
+                .Where(h => !habitacionesOcupadasIds.Contains(h.IdHabitacion))
+                .ToListAsync(ct);
+        }
     }
 }

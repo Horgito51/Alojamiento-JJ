@@ -160,5 +160,16 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
 
             await _habitacionDataService.UpdateEstadoAsync(id, estadoNormalizado, usuario, ct);
         }
+
+        public async Task<IEnumerable<HabitacionDTO>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default)
+        {
+            var dataModels = await _habitacionDataService.GetDisponiblesAsync(idSucursal, inicio, fin, ct);
+            var items = dataModels.ToDtoList();
+            foreach (var item in items)
+            {
+                item.PrecioBase = await GetPrecioVigente(item.IdSucursal, item.IdTipoHabitacion, item.PrecioBase);
+            }
+            return items;
+        }
     }
 }
