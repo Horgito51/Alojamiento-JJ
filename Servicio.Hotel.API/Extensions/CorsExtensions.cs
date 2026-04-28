@@ -8,10 +8,18 @@
             {
                 options.AddPolicy("AllowSpecificOrigins", policy =>
                 {
-                    policy.WithOrigins(allowedOrigins)
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
+                    if (allowedOrigins.Length == 1 && allowedOrigins[0] == "*")
+                    {
+                        policy.AllowAnyOrigin();
+                    }
+                    else
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowCredentials();
+                    }
+
+                    policy.AllowAnyHeader()
+                          .AllowAnyMethod();
                 });
             });
 
