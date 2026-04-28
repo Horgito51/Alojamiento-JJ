@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,5 +19,6 @@ namespace Servicio.Hotel.Business.Interfaces.Alojamiento
         Task<IEnumerable<HabitacionDTO>> GetBySucursalAsync(int idSucursal, CancellationToken ct = default);
         Task<IEnumerable<HabitacionDTO>> GetByTipoHabitacionAsync(int idTipoHabitacion, CancellationToken ct = default);
         Task UpdateEstadoAsync(int id, string nuevoEstado, string usuario, CancellationToken ct = default);
+        Task<IEnumerable<HabitacionDTO>> GetDisponiblesAsync(int idSucursal, DateTime inicio, DateTime fin, CancellationToken ct = default);
     }
 }

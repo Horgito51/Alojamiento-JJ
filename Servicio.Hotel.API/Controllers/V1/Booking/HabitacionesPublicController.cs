@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Servicio.Hotel.API.Models.Responses.Public;
+using Servicio.Hotel.Business.DTOs.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Alojamiento;
 
 namespace Servicio.Hotel.API.Controllers.V1.Booking
