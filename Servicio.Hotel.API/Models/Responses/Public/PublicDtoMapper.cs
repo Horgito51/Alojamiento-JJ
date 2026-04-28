@@ -1,6 +1,8 @@
 using Servicio.Hotel.API.Models.Responses.Public;
 using Servicio.Hotel.Business.DTOs.Alojamiento;
+using Servicio.Hotel.Business.DTOs.Reservas;
 using Servicio.Hotel.Business.DTOs.Seguridad;
+using Servicio.Hotel.Business.DTOs.Valoraciones;
 
 namespace Servicio.Hotel.API.Models.Responses.Public
 {
@@ -69,7 +71,6 @@ namespace Servicio.Hotel.API.Models.Responses.Public
 
         public static HabitacionPublicDto ToPublicDto(this HabitacionDTO dto, SucursalDTO sucursal, TipoHabitacionDTO tipo) => new()
         {
-            IdHabitacion = dto.IdHabitacion,
             HabitacionGuid = dto.HabitacionGuid,
             NumeroHabitacion = dto.NumeroHabitacion,
             Piso = dto.Piso,
@@ -81,6 +82,40 @@ namespace Servicio.Hotel.API.Models.Responses.Public
             TipoHabitacionGuid = tipo.TipoHabitacionGuid,
             TipoHabitacionSlug = tipo.Slug,
             ImagenUrl = dto.Url
+        };
+
+        public static ClientePublicDto ToPublicDto(this ClienteDTO dto) => new()
+        {
+            ClienteGuid = dto.ClienteGuid,
+            TipoIdentificacion = dto.TipoIdentificacion,
+            NumeroIdentificacion = dto.NumeroIdentificacion,
+            Nombres = dto.Nombres,
+            Apellidos = dto.Apellidos,
+            RazonSocial = dto.RazonSocial,
+            Correo = dto.Correo,
+            Telefono = dto.Telefono,
+            Direccion = dto.Direccion,
+            Estado = dto.Estado
+        };
+
+        public static ValoracionPublicDto ToPublicDto(this ValoracionDTO dto) => new()
+        {
+            ValoracionGuid = dto.ValoracionGuid,
+            PuntuacionGeneral = dto.PuntuacionGeneral,
+            PuntuacionLimpieza = dto.PuntuacionLimpieza,
+            PuntuacionConfort = dto.PuntuacionConfort,
+            PuntuacionUbicacion = dto.PuntuacionUbicacion,
+            PuntuacionInstalaciones = dto.PuntuacionInstalaciones,
+            PuntuacionPersonal = dto.PuntuacionPersonal,
+            PuntuacionCalidadPrecio = dto.PuntuacionCalidadPrecio,
+            ComentarioPositivo = dto.ComentarioPositivo,
+            ComentarioNegativo = dto.ComentarioNegativo,
+            TipoViaje = dto.TipoViaje,
+            EstadoValoracion = dto.EstadoValoracion,
+            PublicadaEnPortal = dto.PublicadaEnPortal,
+            RespuestaHotel = dto.RespuestaHotel,
+            FechaRespuestaUtc = dto.FechaRespuestaUtc,
+            FechaRegistroUtc = dto.FechaRegistroUtc
         };
     }
 }

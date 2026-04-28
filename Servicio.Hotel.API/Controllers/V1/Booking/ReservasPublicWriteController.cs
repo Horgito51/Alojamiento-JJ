@@ -1,11 +1,14 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Servicio.Hotel.API.Models.Requests.Internal;
+using Servicio.Hotel.API.Models.Requests.Public;
+using Servicio.Hotel.API.Models.Responses.Public;
 using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.DTOs.Reservas;
+using Servicio.Hotel.Business.Interfaces.Alojamiento;
 using Servicio.Hotel.Business.Interfaces.Reservas;
 using Servicio.Hotel.Business.Interfaces.Seguridad;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -21,19 +24,28 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         private readonly IReservaService _reservaService;
         private readonly IUsuarioService _usuarioService;
         private readonly IClienteService _clienteService;
+        private readonly ISucursalService _sucursalService;
+        private readonly IHabitacionService _habitacionService;
 
-        public ReservasPublicWriteController(IReservaService reservaService, IUsuarioService usuarioService, IClienteService clienteService)
+        public ReservasPublicWriteController(
+            IReservaService reservaService,
+            IUsuarioService usuarioService,
+            IClienteService clienteService,
+            ISucursalService sucursalService,
+            IHabitacionService habitacionService)
         {
             _reservaService = reservaService;
             _usuarioService = usuarioService;
             _clienteService = clienteService;
+            _sucursalService = sucursalService;
+            _habitacionService = habitacionService;
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ReservaDTO>> GetById(int id)
+        [HttpGet("{reservaGuid:guid}")]
+        public async Task<ActionResult<ReservaPublicDto>> GetByGuid(Guid reservaGuid)
         {
-            var result = await _reservaService.GetByIdAsync(id);
-            return Ok(result);
+            var result = await _reservaService.GetByGuidAsync(reservaGuid);
+            return Ok(await ToPublicReservaDtoAsync(result));
         }
 
         [HttpGet]
@@ -46,16 +58,29 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             var filtro = new ReservaFiltroDTO 
             { 
                 IdCliente = idCliente,
-                EstadoReserva = estado
+                EstadoReserva = estado ?? string.Empty
             };
             var result = await _reservaService.GetByFiltroAsync(filtro, page, limit);
-            return Ok(result);
+            var items = new List<ReservaPublicDto>();
+            foreach (var reserva in result.Items)
+            {
+                items.Add(await ToPublicReservaDtoAsync(reserva));
+            }
+
+            return Ok(new
+            {
+                items,
+                result.TotalCount,
+                result.PageNumber,
+                result.PageSize
+            });
         }
 
         [HttpPost]
-        public async Task<ActionResult<ReservaDTO>> Create([FromBody] ReservaCreateRequest request)
+        [AllowAnonymous]
+        public async Task<ActionResult<ReservaPublicDto>> Create([FromBody] PublicReservaCreateRequest request)
         {
-            var idCliente = await GetAuthenticatedClienteIdAsync();
+            request.ValidateNoIds();
 
             if (request.FechaFin <= request.FechaInicio)
                 throw new ValidationException("RES-PUB-001", "La fecha de fin debe ser posterior a la fecha de inicio.");
@@ -63,14 +88,105 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             if (request.Habitaciones == null || request.Habitaciones.Count == 0)
                 throw new ValidationException("RES-PUB-002", "La reserva debe tener al menos una habitacion.");
 
-            await _clienteService.GetByIdAsync(idCliente);
+            if (request.ClienteGuid == Guid.Empty)
+                throw new ValidationException("RES-PUB-003", "clienteGuid es obligatorio.");
 
-            request.IdCliente = idCliente;
-            request.OrigenCanalReserva = "WEB";
-            request.EstadoReserva = "PEN";
+            if (request.SucursalGuid == Guid.Empty)
+                throw new ValidationException("RES-PUB-004", "sucursalGuid es obligatorio.");
 
-            var result = await _reservaService.CreateAsync(request.ToCreateDto());
-            return CreatedAtAction(nameof(GetById), new { id = result.IdReserva }, result);
+            var cliente = await _clienteService.GetByGuidAsync(request.ClienteGuid);
+            var sucursal = await _sucursalService.GetByGuidAsync(request.SucursalGuid);
+            var habitaciones = new List<ReservaHabitacionDTO>();
+
+            foreach (var habitacionRequest in request.Habitaciones)
+            {
+                if (habitacionRequest.HabitacionGuid == Guid.Empty)
+                    throw new ValidationException("RES-PUB-005", "habitacionGuid es obligatorio para cada habitacion.");
+
+                var habitacion = await _habitacionService.GetByGuidAsync(habitacionRequest.HabitacionGuid);
+                if (habitacion.IdSucursal != sucursal.IdSucursal)
+                    throw new ValidationException("RES-PUB-006", $"La habitacion {habitacionRequest.HabitacionGuid} no pertenece a la sucursal indicada.");
+
+                habitaciones.Add(new ReservaHabitacionDTO
+                {
+                    IdHabitacion = habitacion.IdHabitacion,
+                    FechaInicio = habitacionRequest.FechaInicio ?? request.FechaInicio,
+                    FechaFin = habitacionRequest.FechaFin ?? request.FechaFin,
+                    NumAdultos = habitacionRequest.NumAdultos,
+                    NumNinos = habitacionRequest.NumNinos,
+                    DescuentoLinea = habitacionRequest.DescuentoLinea,
+                    EstadoDetalle = "PEN"
+                });
+            }
+
+            var createDto = new ReservaCreateDTO
+            {
+                IdCliente = cliente.IdCliente,
+                IdSucursal = sucursal.IdSucursal,
+                FechaInicio = request.FechaInicio,
+                FechaFin = request.FechaFin,
+                DescuentoAplicado = request.DescuentoAplicado,
+                OrigenCanalReserva = "API_PUBLICA",
+                EstadoReserva = "PEN",
+                Observaciones = request.Observaciones ?? string.Empty,
+                EsWalkin = request.EsWalkin,
+                Habitaciones = habitaciones
+            };
+
+            var result = await _reservaService.CreateAsync(createDto);
+            var response = await ToPublicReservaDtoAsync(result);
+            return CreatedAtAction(nameof(GetByGuid), new { reservaGuid = response.ReservaGuid }, response);
+        }
+
+        private async Task<ReservaPublicDto> ToPublicReservaDtoAsync(ReservaDTO reserva)
+        {
+            var cliente = await _clienteService.GetByIdAsync(reserva.IdCliente);
+            var sucursal = await _sucursalService.GetByIdAsync(reserva.IdSucursal);
+            var habitaciones = new List<ReservaHabitacionPublicDto>();
+
+            foreach (var detalle in reserva.Habitaciones ?? new List<ReservaHabitacionDTO>())
+            {
+                var habitacion = await _habitacionService.GetByIdAsync(detalle.IdHabitacion);
+                habitaciones.Add(new ReservaHabitacionPublicDto
+                {
+                    ReservaHabitacionGuid = detalle.ReservaHabitacionGuid,
+                    HabitacionGuid = habitacion.HabitacionGuid,
+                    FechaInicio = detalle.FechaInicio,
+                    FechaFin = detalle.FechaFin,
+                    NumAdultos = detalle.NumAdultos,
+                    NumNinos = detalle.NumNinos,
+                    PrecioNocheAplicado = detalle.PrecioNocheAplicado,
+                    SubtotalLinea = detalle.SubtotalLinea,
+                    ValorIvaLinea = detalle.ValorIvaLinea,
+                    DescuentoLinea = detalle.DescuentoLinea,
+                    TotalLinea = detalle.TotalLinea,
+                    EstadoDetalle = detalle.EstadoDetalle
+                });
+            }
+
+            return new ReservaPublicDto
+            {
+                ReservaGuid = reserva.GuidReserva,
+                CodigoReserva = reserva.CodigoReserva,
+                ClienteGuid = cliente.ClienteGuid,
+                SucursalGuid = sucursal.SucursalGuid,
+                FechaReservaUtc = reserva.FechaReservaUtc,
+                FechaInicio = reserva.FechaInicio,
+                FechaFin = reserva.FechaFin,
+                SubtotalReserva = reserva.SubtotalReserva,
+                ValorIva = reserva.ValorIva,
+                TotalReserva = reserva.TotalReserva,
+                DescuentoAplicado = reserva.DescuentoAplicado,
+                SaldoPendiente = reserva.SaldoPendiente,
+                OrigenCanalReserva = reserva.OrigenCanalReserva,
+                EstadoReserva = reserva.EstadoReserva,
+                FechaConfirmacionUtc = reserva.FechaConfirmacionUtc,
+                FechaCancelacionUtc = reserva.FechaCancelacionUtc,
+                MotivoCancelacion = reserva.MotivoCancelacion,
+                Observaciones = reserva.Observaciones,
+                EsWalkin = reserva.EsWalkin,
+                Habitaciones = habitaciones
+            };
         }
 
         private async Task<int> GetAuthenticatedClienteIdAsync()

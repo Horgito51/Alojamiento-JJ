@@ -65,7 +65,6 @@ namespace Servicio.Hotel.API.Models.Responses.Public
 
     public sealed class HabitacionPublicDto
     {
-        public int IdHabitacion { get; set; }
         public Guid HabitacionGuid { get; set; }
         public string NumeroHabitacion { get; set; } = string.Empty;
         public int? Piso { get; set; }
@@ -77,5 +76,92 @@ namespace Servicio.Hotel.API.Models.Responses.Public
         public Guid TipoHabitacionGuid { get; set; }
         public string TipoHabitacionSlug { get; set; } = string.Empty;
         public string? ImagenUrl { get; set; }
+    }
+
+    public sealed class ClientePublicDto
+    {
+        public Guid ClienteGuid { get; set; }
+        public string TipoIdentificacion { get; set; } = string.Empty;
+        public string NumeroIdentificacion { get; set; } = string.Empty;
+        public string Nombres { get; set; } = string.Empty;
+        public string Apellidos { get; set; } = string.Empty;
+        public string? RazonSocial { get; set; }
+        public string Correo { get; set; } = string.Empty;
+        public string? Telefono { get; set; }
+        public string? Direccion { get; set; }
+        public string Estado { get; set; } = string.Empty;
+    }
+
+    public sealed class ReservaPublicDto
+    {
+        public Guid ReservaGuid { get; set; }
+        public string CodigoReserva { get; set; } = string.Empty;
+        public Guid ClienteGuid { get; set; }
+        public Guid SucursalGuid { get; set; }
+        public DateTime FechaReservaUtc { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public decimal SubtotalReserva { get; set; }
+        public decimal ValorIva { get; set; }
+        public decimal TotalReserva { get; set; }
+        public decimal DescuentoAplicado { get; set; }
+        public decimal SaldoPendiente { get; set; }
+        public string OrigenCanalReserva { get; set; } = string.Empty;
+        public string EstadoReserva { get; set; } = string.Empty;
+        public DateTime? FechaConfirmacionUtc { get; set; }
+        public DateTime? FechaCancelacionUtc { get; set; }
+        public string? MotivoCancelacion { get; set; }
+        public string? Observaciones { get; set; }
+        public bool EsWalkin { get; set; }
+        public List<ReservaHabitacionPublicDto> Habitaciones { get; set; } = new();
+    }
+
+    public sealed class ReservaHabitacionPublicDto
+    {
+        public Guid ReservaHabitacionGuid { get; set; }
+        public Guid HabitacionGuid { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public int NumAdultos { get; set; }
+        public int NumNinos { get; set; }
+        public decimal PrecioNocheAplicado { get; set; }
+        public decimal SubtotalLinea { get; set; }
+        public decimal ValorIvaLinea { get; set; }
+        public decimal DescuentoLinea { get; set; }
+        public decimal TotalLinea { get; set; }
+        public string EstadoDetalle { get; set; } = string.Empty;
+    }
+
+    public sealed class PagoSimuladoPublicDto
+    {
+        public Guid ReservaGuid { get; set; }
+        public string CodigoReserva { get; set; } = string.Empty;
+        public decimal Monto { get; set; }
+        public string EstadoPago { get; set; } = string.Empty;
+        public string EstadoReserva { get; set; } = string.Empty;
+        public string TransaccionExterna { get; set; } = string.Empty;
+        public string CodigoAutorizacion { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+        public DateTime FechaPagoUtc { get; set; }
+    }
+
+    public sealed class ValoracionPublicDto
+    {
+        public Guid ValoracionGuid { get; set; }
+        public decimal PuntuacionGeneral { get; set; }
+        public decimal? PuntuacionLimpieza { get; set; }
+        public decimal? PuntuacionConfort { get; set; }
+        public decimal? PuntuacionUbicacion { get; set; }
+        public decimal? PuntuacionInstalaciones { get; set; }
+        public decimal? PuntuacionPersonal { get; set; }
+        public decimal? PuntuacionCalidadPrecio { get; set; }
+        public string? ComentarioPositivo { get; set; }
+        public string? ComentarioNegativo { get; set; }
+        public string? TipoViaje { get; set; }
+        public string EstadoValoracion { get; set; } = string.Empty;
+        public bool PublicadaEnPortal { get; set; }
+        public string? RespuestaHotel { get; set; }
+        public DateTime? FechaRespuestaUtc { get; set; }
+        public DateTime FechaRegistroUtc { get; set; }
     }
 }

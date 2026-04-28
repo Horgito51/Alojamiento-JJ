@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning;
 using Servicio.Hotel.API.Models.Requests.Internal;
+using Servicio.Hotel.API.Models.Requests.Public;
+using Servicio.Hotel.API.Models.Responses.Public;
 using Servicio.Hotel.Business.DTOs.Facturacion;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
+using Servicio.Hotel.Business.Interfaces.Reservas;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -16,10 +19,12 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Pagos
     public class PagoController : ControllerBase
     {
         private readonly IPagoService _pagoService;
+        private readonly IReservaService _reservaService;
 
-        public PagoController(IPagoService pagoService)
+        public PagoController(IPagoService pagoService, IReservaService reservaService)
         {
             _pagoService = pagoService;
+            _reservaService = reservaService;
         }
 
         [HttpGet]
@@ -52,12 +57,38 @@ namespace Servicio.Hotel.API.Controllers.V1.Internal.Pagos
         }
 
         [HttpPost("/api/v{version:apiVersion}/pagos/simular")]
-        [HttpPost("/api/v{version:apiVersion}/public/pagos/simular")]
         public async Task<ActionResult<PagoSimuladoDTO>> Simular([FromBody] PagoSimularRequest request)
         {
             var usuario = User.Identity?.Name ?? "Cliente";
             var result = await _pagoService.SimularPagoAsync(request.IdReserva, request.Monto, usuario);
             return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("/api/v{version:apiVersion}/public/pagos/simular")]
+        public async Task<ActionResult<PagoSimuladoPublicDto>> SimularPublico([FromBody] PublicPagoSimularRequest request)
+        {
+            request.ValidateNoIds();
+
+            if (request.ReservaGuid == Guid.Empty)
+                throw new Servicio.Hotel.Business.Exceptions.ValidationException("PAG-PUB-001", "reservaGuid es obligatorio.");
+
+            var reserva = await _reservaService.GetByGuidAsync(request.ReservaGuid);
+            var usuario = User.Identity?.Name ?? "API_PUBLICA";
+            var result = await _pagoService.SimularPagoAsync(reserva.IdReserva, request.Monto, usuario);
+
+            return Ok(new PagoSimuladoPublicDto
+            {
+                ReservaGuid = reserva.GuidReserva,
+                CodigoReserva = result.CodigoReserva,
+                Monto = result.Monto,
+                EstadoPago = result.EstadoPago,
+                EstadoReserva = result.EstadoReserva,
+                TransaccionExterna = result.TransaccionExterna,
+                CodigoAutorizacion = result.CodigoAutorizacion,
+                Mensaje = result.Mensaje,
+                FechaPagoUtc = result.FechaPagoUtc
+            });
         }
 
         [HttpPatch("{id}/estado")]
