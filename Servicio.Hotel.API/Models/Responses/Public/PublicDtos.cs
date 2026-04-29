@@ -134,10 +134,7 @@ namespace Servicio.Hotel.API.Models.Responses.Public
 
     public sealed class ReservaPrecioPublicDto
     {
-        public int IdHabitacion { get; set; }
         public Guid HabitacionGuid { get; set; }
-        public int IdSucursal { get; set; }
-        public int? IdTarifa { get; set; }
         public decimal PrecioNocheAplicado { get; set; }
         public decimal SubtotalLinea { get; set; }
         public decimal ValorIvaLinea { get; set; }

@@ -75,6 +75,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 ExpiresIn = expirationMinutes * 60,
                 UsuarioGuid = usuario.UsuarioGuid,
                 IdCliente = usuario.IdCliente,
+                ClienteGuid = await GetClienteGuidAsync(usuario.IdCliente, ct),
                 Username = usuario.Username,
                 Correo = usuario.Correo,
                 NombreCompleto = $"{usuario.Nombres} {usuario.Apellidos}",
@@ -200,6 +201,7 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 ExpiresIn = expirationMinutes * 60,
                 UsuarioGuid = usuario.UsuarioGuid,
                 IdCliente = usuario.IdCliente,
+                ClienteGuid = await GetClienteGuidAsync(usuario.IdCliente, ct),
                 Username = usuario.Username,
                 Correo = usuario.Correo,
                 NombreCompleto = $"{usuario.Nombres} {usuario.Apellidos}",
@@ -365,11 +367,28 @@ namespace Servicio.Hotel.Business.Services.Seguridad
                 ExpiresIn = expirationMinutes * 60,
                 UsuarioGuid = usuarioCreado.UsuarioGuid,
                 IdCliente = usuarioCreado.IdCliente,
+                ClienteGuid = cliente.ClienteGuid,
                 Username = usuarioCreado.Username,
                 Correo = usuarioCreado.Correo,
                 NombreCompleto = $"{usuarioCreado.Nombres} {usuarioCreado.Apellidos}".Trim(),
                 Roles = roles
             };
+        }
+
+        private async Task<Guid?> GetClienteGuidAsync(int? idCliente, CancellationToken ct)
+        {
+            if (!idCliente.HasValue || idCliente.Value <= 0)
+                return null;
+
+            try
+            {
+                var cliente = await _clienteService.GetByIdAsync(idCliente.Value, ct);
+                return cliente.ClienteGuid;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private async Task<Servicio.Hotel.DataManagement.Seguridad.Models.RolDataModel> GetClienteRoleAsync(CancellationToken ct)

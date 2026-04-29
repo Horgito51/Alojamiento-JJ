@@ -138,6 +138,23 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
             return CreatedAtAction(nameof(GetByGuid), new { reservaGuid = response.ReservaGuid }, response);
         }
 
+        [HttpPatch("{reservaGuid:guid}/cancelar")]
+        public async Task<IActionResult> Cancelar(Guid reservaGuid, [FromBody] PublicCancelarReservaRequest request)
+        {
+            if (reservaGuid == Guid.Empty)
+                throw new ValidationException("RES-PUB-CAN-001", "reservaGuid es obligatorio.");
+
+            request.ValidateNoIds();
+            var reserva = await _reservaService.GetByGuidAsync(reservaGuid);
+            await _reservaService.CancelarAsync(
+                reserva.IdReserva,
+                string.IsNullOrWhiteSpace(request.Motivo) ? "Cancelada desde flujo publico." : request.Motivo,
+                User.Identity?.Name ?? "CLIENTE_PUBLICO",
+                HttpContext.RequestAborted);
+
+            return NoContent();
+        }
+
         [HttpPost("calcular-precio")]
         [AllowAnonymous]
         public async Task<ActionResult<ReservaPrecioPublicDto>> CalcularPrecio([FromBody] PublicReservaPrecioRequest request)
@@ -160,10 +177,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
 
             return Ok(new ReservaPrecioPublicDto
             {
-                IdHabitacion = precio.IdHabitacion,
                 HabitacionGuid = habitacion.HabitacionGuid,
-                IdSucursal = precio.IdSucursal,
-                IdTarifa = precio.IdTarifa,
                 PrecioNocheAplicado = precio.PrecioNocheAplicado,
                 SubtotalLinea = precio.SubtotalLinea,
                 ValorIvaLinea = precio.ValorIvaLinea,

@@ -74,6 +74,17 @@ namespace Servicio.Hotel.API.Models.Requests.Public
             => PublicRequestGuard.RejectIdProperties(ExtraProperties);
     }
 
+    public sealed class PublicCancelarReservaRequest
+    {
+        public string? Motivo { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtraProperties { get; set; }
+
+        public void ValidateNoIds()
+            => PublicRequestGuard.RejectIdProperties(ExtraProperties);
+    }
+
     internal static class PublicRequestGuard
     {
         public static void RejectIdProperties(Dictionary<string, JsonElement>? extraProperties)
