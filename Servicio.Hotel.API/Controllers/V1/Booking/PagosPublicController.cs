@@ -25,6 +25,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         }
 
         [HttpPost("simular")]
+        [AllowAnonymous]
         public async Task<ActionResult<PagoSimuladoPublicDto>> Simular([FromBody] PublicPagoSimularRequest request)
         {
             request.ValidateNoIds();

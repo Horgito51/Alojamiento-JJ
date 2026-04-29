@@ -139,6 +139,7 @@ namespace Servicio.Hotel.API.Controllers.V1.Booking
         }
 
         [HttpPatch("{reservaGuid:guid}/cancelar")]
+        [AllowAnonymous]
         public async Task<IActionResult> Cancelar(Guid reservaGuid, [FromBody] PublicCancelarReservaRequest request)
         {
             if (reservaGuid == Guid.Empty)
