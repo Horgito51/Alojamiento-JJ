@@ -193,9 +193,11 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                     FechaPagoUtc = DateTime.UtcNow,
                     Moneda = string.IsNullOrWhiteSpace(factura.Moneda) ? "USD" : factura.Moneda,
                     TipoCambio = 1m,
-                    RespuestaPasarela = gatewayResult.RespuestaRaw,
+                    RespuestaPasarela = gatewayResult.RespuestaRaw ?? string.Empty,
                     CreadoPorUsuario = usuario,
                     FechaRegistroUtc = DateTime.UtcNow,
+                    ModificadoPorUsuario = string.Empty,
+                    ModificacionIp = string.Empty,
                     ServicioOrigen = "facturacion-service"
                 }, ct);
 

@@ -105,9 +105,14 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 DescuentoTotal = reserva.DescuentoAplicado,
                 SaldoPendiente = reserva.TotalReserva,
                 Moneda = "USD",
+                ObservacionesFactura = string.Empty,
+                OrigenCanalFactura = "API_PUBLICA",
                 Estado = "EMI",
+                EsEliminado = false,
                 CreadoPorUsuario = usuario,
                 FechaRegistroUtc = DateTime.UtcNow,
+                ModificadoPorUsuario = string.Empty,
+                ModificacionIp = string.Empty,
                 ServicioOrigen = "facturacion-service"
             };
 
@@ -187,9 +192,14 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 DescuentoTotal = reserva.DescuentoAplicado,
                 SaldoPendiente = reserva.TotalReserva,
                 Moneda = "USD",
+                ObservacionesFactura = string.Empty,
+                OrigenCanalFactura = "API_PUBLICA",
                 Estado = "EMI",
+                EsEliminado = false,
                 CreadoPorUsuario = usuario,
                 FechaRegistroUtc = DateTime.UtcNow,
+                ModificadoPorUsuario = string.Empty,
+                ModificacionIp = string.Empty,
                 ServicioOrigen = "facturacion-service"
             };
 
