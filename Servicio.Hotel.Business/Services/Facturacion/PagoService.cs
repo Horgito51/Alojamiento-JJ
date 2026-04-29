@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -135,7 +137,7 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                 EsEliminado = false
             }, 1, 10, ct);
 
-            var factura = facturas.Items
+            var factura = (facturas?.Items ?? new List<FacturaDTO>())
                 .Where(f => f.Estado != "ANU")
                 .OrderByDescending(f => f.FechaEmision)
                 .FirstOrDefault();
@@ -162,6 +164,9 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                 Referencia = referencia ?? $"RES-{reserva.CodigoReserva}",
                 TokenPago = tokenPago
             }, ct);
+
+            if (gatewayResult == null)
+                throw new ValidationException("PAG-010", "La pasarela de pago no devolvio un resultado valido.");
 
             var estadoPago = gatewayResult.Aprobado ? "APR" : "REC";
 
