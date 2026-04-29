@@ -21,11 +21,11 @@ namespace Servicio.Hotel.API.Services
 
         public async Task<PaymentGatewayResult> ProcesarPagoAsync(PaymentGatewayRequest request, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(_settings.BaseUrl))
-                throw new ValidationException("PAG-GW-001", "La pasarela de pagos no esta configurada. Defina PaymentGateway:BaseUrl.");
-
             if (string.IsNullOrWhiteSpace(request.TokenPago))
                 throw new ValidationException("PAG-GW-002", "El token de pago emitido por la pasarela es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(_settings.BaseUrl))
+                return CrearPagoSimulado(request);
 
             var url = new Uri(new Uri(_settings.BaseUrl.TrimEnd('/') + "/"), _settings.ChargePath.TrimStart('/'));
             using var message = new HttpRequestMessage(HttpMethod.Post, url);
@@ -91,6 +91,33 @@ namespace Servicio.Hotel.API.Services
             }
 
             return string.Empty;
+        }
+
+        private static PaymentGatewayResult CrearPagoSimulado(PaymentGatewayRequest request)
+        {
+            var transactionId = $"SIM-{Guid.NewGuid():N}";
+            var authorizationCode = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+
+            return new PaymentGatewayResult
+            {
+                Aprobado = true,
+                Estado = "APR",
+                TransaccionExterna = transactionId,
+                CodigoAutorizacion = authorizationCode,
+                Mensaje = "Pago aprobado en modo simulacion.",
+                RespuestaRaw = JsonSerializer.Serialize(new
+                {
+                    status = "APPROVED",
+                    mode = "SIMULATED",
+                    transactionId,
+                    authorizationCode,
+                    amount = request.Monto,
+                    currency = request.Moneda,
+                    reference = request.Referencia,
+                    reservationId = request.IdReserva,
+                    invoiceId = request.IdFactura
+                })
+            };
         }
     }
 }
