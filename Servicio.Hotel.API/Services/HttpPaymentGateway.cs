@@ -41,7 +41,30 @@ namespace Servicio.Hotel.API.Services
             if (string.IsNullOrWhiteSpace(_settings.BaseUrl))
                 return CrearPagoSimulado(request);
 
-            var url = new Uri(new Uri(_settings.BaseUrl.TrimEnd('/') + "/"), _settings.ChargePath.TrimStart('/'));
+            Uri url;
+            try
+            {
+                var baseUrl = (_settings.BaseUrl ?? string.Empty).TrimEnd('/') + "/";
+                var chargePath = (_settings.ChargePath ?? string.Empty).TrimStart('/');
+                url = new Uri(new Uri(baseUrl), chargePath);
+            }
+            catch (Exception ex)
+            {
+                // #region agent log
+                WriteDebugLog(
+                    "H28",
+                    "Servicio.Hotel.API/Services/HttpPaymentGateway.cs:ProcesarPagoAsync:invalidGatewayConfig",
+                    "Invalid gateway URL configuration",
+                    $"{{\"baseUrl\":\"{(_settings.BaseUrl ?? string.Empty).Replace("\"", "'")}\",\"chargePath\":\"{(_settings.ChargePath ?? string.Empty).Replace("\"", "'")}\",\"message\":\"{(ex.Message ?? string.Empty).Replace("\"", "'")}\"}}");
+                // #endregion
+                return new PaymentGatewayResult
+                {
+                    Aprobado = false,
+                    Estado = "REC",
+                    Mensaje = "La configuración de la pasarela de pago no es válida.",
+                    RespuestaRaw = ex.Message
+                };
+            }
             using var message = new HttpRequestMessage(HttpMethod.Post, url);
 
             if (!string.IsNullOrWhiteSpace(_settings.ApiKey))
