@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Servicio.Hotel.Business.Common;
@@ -15,6 +16,19 @@ namespace Servicio.Hotel.Business.Services.Facturacion
 {
     public class PagoService : IPagoService
     {
+        private static void WriteDebugLog(string hypothesisId, string location, string message, string dataJson)
+        {
+            try
+            {
+                var payload = $"{{\"sessionId\":\"86bafb\",\"runId\":\"initial\",\"hypothesisId\":\"{hypothesisId}\",\"location\":\"{location}\",\"message\":\"{message}\",\"data\":{dataJson},\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}}}";
+                File.AppendAllText(@"c:\Users\jorge\OneDrive\Escritorio\Puce\Semestre 6\Integracion de sistemas\Practicas\debug-86bafb.log", payload + Environment.NewLine);
+            }
+            catch
+            {
+                // ignore debug logger failures
+            }
+        }
+
         private readonly IPagoDataService _pagoDataService;
         private readonly IReservaService _reservaService;
         private readonly IFacturaService _facturaService;
@@ -151,8 +165,17 @@ namespace Servicio.Hotel.Business.Services.Facturacion
 
             var estadoPago = gatewayResult.Aprobado ? "APR" : "REC";
 
-            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            try
             {
+                // #region agent log
+                WriteDebugLog(
+                    "H23",
+                    "Servicio.Hotel.Business/Services/Facturacion/PagoService.cs:SimularPagoAsync:beforeTransaction",
+                    "Before payment transaction persist",
+                    $"{{\"idReserva\":{reserva.IdReserva},\"idFactura\":{factura.IdFactura},\"montoFinal\":{montoFinal},\"facturaMoneda\":{(string.IsNullOrWhiteSpace(factura.Moneda) ? "\"USD\"" : $"\\\"{factura.Moneda}\\\"")}}}");
+                // #endregion
+                await _unitOfWork.ExecuteInTransactionAsync(async () =>
+                {
                 await CreateAsync(new PagoDTO
                 {
                     IdFactura = factura.IdFactura,
@@ -171,7 +194,9 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                     Moneda = string.IsNullOrWhiteSpace(factura.Moneda) ? "USD" : factura.Moneda,
                     TipoCambio = 1m,
                     RespuestaPasarela = gatewayResult.RespuestaRaw,
-                    CreadoPorUsuario = usuario
+                    CreadoPorUsuario = usuario,
+                    FechaRegistroUtc = DateTime.UtcNow,
+                    ServicioOrigen = "facturacion-service"
                 }, ct);
 
                 if (gatewayResult.Aprobado)
@@ -193,7 +218,19 @@ namespace Servicio.Hotel.Business.Services.Facturacion
                         Observaciones = reserva.Observaciones
                     }, ct);
                 }
-            }, ct);
+                }, ct);
+            }
+            catch (Exception ex)
+            {
+                // #region agent log
+                WriteDebugLog(
+                    "H24",
+                    "Servicio.Hotel.Business/Services/Facturacion/PagoService.cs:SimularPagoAsync:transactionError",
+                    "Payment transaction failed",
+                    $"{{\"idReserva\":{reserva.IdReserva},\"idFactura\":{factura.IdFactura},\"message\":\"{(ex.Message ?? string.Empty).Replace("\"", "'")}\"}}");
+                // #endregion
+                throw;
+            }
 
             return new PagoSimuladoDTO
             {
