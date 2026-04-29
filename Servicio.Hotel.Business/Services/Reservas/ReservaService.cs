@@ -76,6 +76,9 @@ namespace Servicio.Hotel.Business.Services.Reservas
 
         public async Task<ReservaDTO> CreateAsync(ReservaCreateDTO reservaCreateDto, CancellationToken ct = default)
         {
+            if (reservaCreateDto.Habitaciones == null || reservaCreateDto.Habitaciones.Count == 0)
+                throw new ValidationException("RES-010", "Toda reserva debe tener al menos una habitacion.");
+
             decimal subtotalTotal = 0;
             const decimal ivaRate = 0.12m;
 
@@ -121,6 +124,7 @@ namespace Servicio.Hotel.Business.Services.Reservas
             };
 
             ReservaValidator.Validate(reservaDto);
+            await EnsureHabitacionesDisponiblesAsync(reservaDto, null, ct);
             var dataModel = reservaDto.ToDataModel();
             var created = await _reservaDataService.AddAsync(dataModel, ct);
             return created.ToDto();
@@ -182,11 +186,23 @@ namespace Servicio.Hotel.Business.Services.Reservas
             if (existing == null)
                 throw new NotFoundException("RES-004", $"No se encontro la reserva con ID {reservaUpdateDto.IdReserva}.");
 
+            if (existing.EstadoReserva is "CAN" or "FIN")
+                throw new ConflictException("No se puede modificar una reserva cancelada o finalizada.");
+
             reservaDto.IdCliente = existing.IdCliente;
             reservaDto.IdSucursal = existing.IdSucursal;
             reservaDto.OrigenCanalReserva = existing.OrigenCanalReserva;
+            reservaDto.Habitaciones = (existing.Habitaciones?.ToDtoList() ?? new List<ReservaHabitacionDTO>())
+                .Select(h =>
+                {
+                    h.FechaInicio = reservaUpdateDto.FechaInicio;
+                    h.FechaFin = reservaUpdateDto.FechaFin;
+                    return h;
+                })
+                .ToList();
 
             ReservaValidator.Validate(reservaDto);
+            await EnsureHabitacionesDisponiblesAsync(reservaDto, reservaUpdateDto.IdReserva, ct);
 
             existing.FechaInicio = reservaDto.FechaInicio;
             existing.FechaFin = reservaDto.FechaFin;
@@ -294,6 +310,40 @@ namespace Servicio.Hotel.Business.Services.Reservas
             var estado = (habitacion.EstadoHabitacion ?? string.Empty).Trim().ToUpperInvariant();
             if (estado is "MNT" or "FDS" or "OCU" or "INA")
                 throw new ConflictException($"La habitacion {habitacion.IdHabitacion} no esta disponible para reservar. Estado actual: {estado}.");
+        }
+
+        private async Task EnsureHabitacionesDisponiblesAsync(ReservaDTO reserva, int? excludeIdReserva, CancellationToken ct)
+        {
+            if (reserva.Habitaciones == null || reserva.Habitaciones.Count == 0)
+                throw new ValidationException("RES-010", "Toda reserva debe tener al menos una habitacion.");
+
+            foreach (var detalle in reserva.Habitaciones)
+            {
+                if (detalle.IdHabitacion <= 0)
+                    throw new ValidationException("RES-011", "Cada habitacion de la reserva debe tener un identificador valido.");
+
+                var fechaInicio = detalle.FechaInicio == default ? reserva.FechaInicio : detalle.FechaInicio;
+                var fechaFin = detalle.FechaFin == default ? reserva.FechaFin : detalle.FechaFin;
+
+                if (fechaFin <= fechaInicio)
+                    throw new ValidationException("RES-009", "La fecha de fin debe ser posterior a la fecha de inicio.");
+
+                var habitacion = await _habitacionService.GetByIdAsync(detalle.IdHabitacion, ct);
+                EnsureHabitacionReservable(habitacion);
+
+                if (habitacion.IdSucursal != reserva.IdSucursal)
+                    throw new ValidationException("RES-012", $"La habitacion {detalle.IdHabitacion} no pertenece a la sucursal de la reserva.");
+
+                var solapa = await _reservaDataService.ExisteSolapamientoAsync(
+                    detalle.IdHabitacion,
+                    fechaInicio,
+                    fechaFin,
+                    excludeIdReserva,
+                    ct);
+
+                if (solapa)
+                    throw new ConflictException($"La habitacion {detalle.IdHabitacion} ya tiene una reserva activa en esas fechas.");
+            }
         }
     }
 }

@@ -14,6 +14,12 @@ namespace Servicio.Hotel.API.Extensions
                     policy.RequireAssertion(context =>
                         !context.User.IsInRole(AuthorizationPolicies.ClienteRole));
                 });
+
+                options.AddPolicy(AuthorizationPolicies.BackOffice, policy =>
+                {
+                    policy.RequireAuthenticatedUser();
+                    policy.RequireRole(AuthorizationPolicies.BackOfficeRoles);
+                });
             });
 
             return services;

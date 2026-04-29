@@ -92,6 +92,7 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             };
 
             HabitacionValidator.Validate(habitacionDto);
+            await EnsureNumeroUnicoEnSucursalAsync(habitacionDto.IdSucursal, habitacionDto.NumeroHabitacion, null, ct);
             var dataModel = habitacionDto.ToDataModel();
             var created = await _habitacionDataService.AddAsync(dataModel, ct);
             return created.ToDto();
@@ -111,6 +112,9 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
             existing.Url = habitacionUpdateDto.Url ?? string.Empty;
             existing.DescripcionHabitacion = habitacionUpdateDto.DescripcionHabitacion ?? string.Empty;
             existing.EstadoHabitacion = habitacionUpdateDto.EstadoHabitacion;
+
+            HabitacionValidator.Validate(existing.ToDto());
+            await EnsureNumeroUnicoEnSucursalAsync(existing.IdSucursal, existing.NumeroHabitacion, existing.IdHabitacion, ct);
 
             await _habitacionDataService.UpdateAsync(existing, ct);
         }
@@ -189,6 +193,19 @@ namespace Servicio.Hotel.Business.Services.Alojamiento
 
             if (tieneReservasActivas)
                 throw new ConflictException("No se puede eliminar la habitacion porque tiene reservas activas asociadas.");
+        }
+
+        private async Task EnsureNumeroUnicoEnSucursalAsync(int idSucursal, string numeroHabitacion, int? idHabitacion, CancellationToken ct)
+        {
+            var numeroNormalizado = (numeroHabitacion ?? string.Empty).Trim().ToUpperInvariant();
+            var existe = await _context.Habitaciones.AnyAsync(h =>
+                h.IdSucursal == idSucursal &&
+                h.NumeroHabitacion.Trim().ToUpper() == numeroNormalizado &&
+                (!idHabitacion.HasValue || h.IdHabitacion != idHabitacion.Value) &&
+                !h.EsEliminado, ct);
+
+            if (existe)
+                throw new ConflictException("Ya existe una habitacion con ese numero en la sucursal.");
         }
     }
 }

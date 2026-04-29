@@ -8,6 +8,7 @@ using Servicio.Hotel.Business.Exceptions;
 using Servicio.Hotel.Business.Interfaces.Facturacion;
 using Servicio.Hotel.Business.Mappers.Facturacion;
 using Servicio.Hotel.Business.Validators.Facturacion;
+using Servicio.Hotel.DataAccess.Context;
 using Servicio.Hotel.DataManagement.Facturacion.Interfaces;
 
 namespace Servicio.Hotel.Business.Services.Facturacion
@@ -15,10 +16,12 @@ namespace Servicio.Hotel.Business.Services.Facturacion
     public class FacturaService : IFacturaService
     {
         private readonly IFacturaDataService _facturaDataService;
+        private readonly ServicioHotelDbContext _context;
 
-        public FacturaService(IFacturaDataService facturaDataService)
+        public FacturaService(IFacturaDataService facturaDataService, ServicioHotelDbContext context)
         {
             _facturaDataService = facturaDataService;
+            _context = context;
         }
 
         public async Task<FacturaDTO> GetByIdAsync(int id, CancellationToken ct = default)
@@ -93,6 +96,13 @@ namespace Servicio.Hotel.Business.Services.Facturacion
 
         public async Task<int> GenerarFacturaReservaAsync(int idReserva, string usuario, CancellationToken ct = default)
         {
+            var reserva = await _context.Reservas.FindAsync(new object[] { idReserva }, ct);
+            if (reserva == null)
+                throw new NotFoundException("FAC-007", $"No se encontro la reserva con ID {idReserva}.");
+
+            if (reserva.EstadoReserva != "CON")
+                throw new ValidationException("FAC-008", "Solo se puede generar factura para una reserva confirmada.");
+
             var filtro = new FacturaFiltroDTO
             {
                 IdReserva = idReserva,

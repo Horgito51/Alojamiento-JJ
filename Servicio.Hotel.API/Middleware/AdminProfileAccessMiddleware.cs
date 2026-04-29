@@ -31,9 +31,26 @@ namespace Servicio.Hotel.API.Middleware
                 return;
             }
 
-            var isCliente = context.User.Claims.Any(claim =>
-                claim.Type == ClaimTypes.Role &&
-                string.Equals(claim.Value, AuthorizationPolicies.ClienteRole, StringComparison.OrdinalIgnoreCase));
+            var roles = context.User.Claims
+                .Where(claim => claim.Type == ClaimTypes.Role)
+                .Select(claim => claim.Value)
+                .ToList();
+
+            var isCliente = roles.Any(role =>
+                string.Equals(role, AuthorizationPolicies.ClienteRole, StringComparison.OrdinalIgnoreCase));
+
+            var hasBackOfficeRole = roles.Any(role =>
+                AuthorizationPolicies.BackOfficeRoles.Any(allowed =>
+                    string.Equals(role, allowed, StringComparison.OrdinalIgnoreCase)));
+
+            if (!hasBackOfficeRole)
+            {
+                await WriteErrorAsync(
+                    context,
+                    StatusCodes.Status403Forbidden,
+                    "Acceso denegado. Se requiere rol administrativo o de recepcion.");
+                return;
+            }
 
             if (isCliente)
             {

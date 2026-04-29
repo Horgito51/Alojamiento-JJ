@@ -252,6 +252,24 @@ namespace Servicio.Hotel.DataManagement.Reservas.Services
             entity.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";
             entity.FechaModificacionUtc = DateTime.UtcNow;
 
+            if (entity.ReservasHabitaciones != null)
+            {
+                foreach (var detalle in entity.ReservasHabitaciones)
+                {
+                    var noches = (int)(model.FechaFin.Date - model.FechaInicio.Date).TotalDays;
+                    if (noches <= 0) noches = 1;
+
+                    detalle.FechaInicio = model.FechaInicio;
+                    detalle.FechaFin = model.FechaFin;
+                    detalle.SubtotalLinea = Math.Round(detalle.PrecioNocheAplicado * noches, 2);
+                    detalle.ValorIvaLinea = Math.Round(detalle.SubtotalLinea * 0.12m, 2);
+                    detalle.TotalLinea = Math.Max(0, detalle.SubtotalLinea + detalle.ValorIvaLinea - detalle.DescuentoLinea);
+                    detalle.EstadoDetalle = model.EstadoReserva;
+                    detalle.ModificadoPorUsuario = model.ModificadoPorUsuario ?? "Sistema";
+                    detalle.FechaModificacionUtc = DateTime.UtcNow;
+                }
+            }
+
             await _reservaRepository.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
         }
