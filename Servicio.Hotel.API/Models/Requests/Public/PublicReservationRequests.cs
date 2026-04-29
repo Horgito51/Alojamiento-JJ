@@ -64,8 +64,18 @@ namespace Servicio.Hotel.API.Models.Requests.Public
     {
         public Guid ReservaGuid { get; set; }
         public decimal? Monto { get; set; }
+        public string MetodoPago { get; set; } = "TARJETA";
+        public bool EsPagoElectronico { get; set; } = true;
+        public string? ProveedorPasarela { get; set; } = "EXTERNAL";
+        public string? TransaccionExterna { get; set; }
+        public string? CodigoAutorizacion { get; set; }
         public string? TokenPago { get; set; }
         public string? Referencia { get; set; }
+        public string EstadoPago { get; set; } = "PEN";
+        public DateTime? FechaPagoUtc { get; set; }
+        public string Moneda { get; set; } = "USD";
+        public decimal TipoCambio { get; set; } = 1m;
+        public string? RespuestaPasarela { get; set; }
 
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? ExtraProperties { get; set; }
