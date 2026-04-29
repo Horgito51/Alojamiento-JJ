@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,19 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
 {
     public class FacturaRepository : RepositoryBase<FacturaEntity>, IFacturaRepository
     {
+        private static void WriteDebugLog(string hypothesisId, string location, string message, string dataJson)
+        {
+            try
+            {
+                var payload = $"{{\"sessionId\":\"86bafb\",\"runId\":\"initial\",\"hypothesisId\":\"{hypothesisId}\",\"location\":\"{location}\",\"message\":\"{message}\",\"data\":{dataJson},\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}}}";
+                File.AppendAllText(@"c:\Users\jorge\OneDrive\Escritorio\Puce\Semestre 6\Integracion de sistemas\Practicas\debug-86bafb.log", payload + Environment.NewLine);
+            }
+            catch
+            {
+                // ignore debug logger failures
+            }
+        }
+
         public FacturaRepository(ServicioHotelDbContext context) : base(context) { }
 
         public async Task<FacturaEntity?> GetByIdAsync(int id, CancellationToken ct = default)
@@ -96,8 +110,29 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 ServicioOrigen = "facturacion-service"
             };
 
+            // #region agent log
+            WriteDebugLog(
+                "H6",
+                "Servicio.Hotel.DataAccess/Repositories/Facturacion/FacturaRepository.cs:GenerarFacturaReservaAsync:beforeAdd",
+                "Factura payload before insert",
+                $"{{\"idReserva\":{idReserva},\"facturaMoneda\":{(factura.Moneda == null ? "null" : $"\\\"{factura.Moneda}\\\"")},\"reservaTotal\":{reserva.TotalReserva},\"reservaEstado\":\"{reserva.EstadoReserva}\"}}");
+            // #endregion
             await _context.Facturas.AddAsync(factura, ct);
-            await _context.SaveChangesAsync(ct);
+            try
+            {
+                await _context.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                // #region agent log
+                WriteDebugLog(
+                    "H7",
+                    "Servicio.Hotel.DataAccess/Repositories/Facturacion/FacturaRepository.cs:GenerarFacturaReservaAsync:saveError",
+                    "Factura insert failed",
+                    $"{{\"idReserva\":{idReserva},\"message\":\"{(ex.Message ?? string.Empty).Replace("\"", "'")}\"}}");
+                // #endregion
+                throw;
+            }
 
             // Crear detalles de la factura basados en las habitaciones
             foreach (var rh in reserva.ReservasHabitaciones)
