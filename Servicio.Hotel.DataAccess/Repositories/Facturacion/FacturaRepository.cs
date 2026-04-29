@@ -147,7 +147,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 {
                     FacturaDetalleGuid = Guid.NewGuid(),
                     IdFactura = factura.IdFactura,
-                    TipoItem = "HABITACION",
+                    TipoItem = "ALOJAMIENTO",
                     ReferenciaId = rh.IdHabitacion,
                     DescripcionItem = $"Hospedaje Habitacion {rh.IdHabitacion} ({rh.FechaInicio:yyyy-MM-dd} al {rh.FechaFin:yyyy-MM-dd})",
                     Cantidad = (int)(rh.FechaFin.Date - rh.FechaInicio.Date).TotalDays,
@@ -212,7 +212,7 @@ namespace Servicio.Hotel.DataAccess.Repositories.Facturacion
                 {
                     FacturaDetalleGuid = Guid.NewGuid(),
                     IdFactura = factura.IdFactura,
-                    TipoItem = "HABITACION",
+                    TipoItem = "ALOJAMIENTO",
                     ReferenciaId = rh.IdHabitacion,
                     DescripcionItem = $"Liquidacion Hospedaje Habitacion {rh.IdHabitacion}",
                     Cantidad = (int)(rh.FechaFin.Date - rh.FechaInicio.Date).TotalDays,
